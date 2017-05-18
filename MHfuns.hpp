@@ -17,7 +17,7 @@
 #include <string>
 using namespace std;
 
-const int nParam = 3,nDataPoint = 100;
+const int nParam = 4,nDataPoint = 5,nNode=2;
 const double c1 = 0.282095; //sqrt(1/(2*pi))
 void InitializeParameters();
 void InitializeFile();
@@ -32,6 +32,7 @@ double CalcPrior(double Par[nParam]);
 double CalcLikelihood(double Par[nParam]);
 double dUnif(double start, double end, double value);
 double dNorm(double mean, double sd, double value);
+void CalcTrueVals();
 typedef mt19937 MyRNG;  // the Mersenne Twister with a popular choice of parameters
 extern double prob1, prob2;
 extern double TestData[nDataPoint][2];
@@ -41,6 +42,7 @@ extern bool Burn,accept;
 extern ifstream in;
 extern ofstream out;
 extern MyRNG rng;
+
 
 
 #endif /* MHfuns_hpp */

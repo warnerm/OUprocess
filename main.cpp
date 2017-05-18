@@ -9,44 +9,63 @@
 #include "MHfuns.hpp"
 int boots = 100000,BurnIn = 10000;
 bool Burn = true,accept;
-ifstream in;
 ofstream out;
 double prob1, prob2;
-double TestData[nDataPoint][2];
-double RealVal[nParam] = {1,5,5},Prop[nParam],CParam[nParam],stepSize[nParam] = {0.2,0.2,0.5};
+double TestData[nDataPoint][nNode];
+//For the following, define individual variance, phenotypic drift, selection, and optimum expression
+double RealVal[nParam] = {10,5,0.5,80},Prop[nParam],CParam[nParam],stepSize[nParam] = {0.2,0.2,0.05,1};
+double AncestorExpr = 100, AncestorVar = 25;
+double branchTimes[nNode] = {3,2};
+double TrueNodeExpr[nNode];
+double TrueNodeVar[nNode];
 MyRNG rng;
 
 
 int main(int argc, const char * argv[]) {
+    CalcTrueVals();
+//    for (int i = 0; i < nNode; i++){
+//        cout << TrueNodeVar[i] << endl;
+//        cout << TrueNodeExpr[i] << endl;
+//    }
     GenerateData(); //While testing utility of approach
-    InitializeParameters();
-    InitializeFile();
-    for (int i = 0; i < nDataPoint; i++){
-        cout << TestData[i][0] << endl;
-        cout << TestData[i][1] << endl;
-    }
-    for (int i=0; i < BurnIn; i++){
-        runML();
-    }
-    Burn = false; //Begin keeping track of values
-    for (int i = 0; i < boots; i++)
-        runML();
+//    InitializeParameters();
+//    InitializeFile();
+//    for (int i = 0; i < nDataPoint; i++){
+//        cout << TestData[i][0] << endl;
+//        cout << TestData[i][1] << endl;
+//    }
+//    for (int i=0; i < BurnIn; i++){
+//        runML();
+//    }
+//    Burn = false; //Begin keeping track of values
+//    for (int i = 0; i < boots; i++)
+//        runML();
     return 0;
+}
+
+//Calculate true expected values based on parameter values
+void CalcTrueVals(){
+    for (int i = 0; i < nNode; i++){
+        TrueNodeExpr[i] = AncestorExpr*exp(-RealVal[2]*branchTimes[i]) + RealVal[3]*(1 - exp(-RealVal[2]*branchTimes[i]));
+        TrueNodeVar[i] = (RealVal[1]/(2*RealVal[2]))*(1 - exp(-2*RealVal[2]*branchTimes[i])) + AncestorVar*exp(-2*RealVal[2]*branchTimes[i]);
+    }
 }
 
 //Generate dummy data from random values centered around true values
 void GenerateData(){
-    normal_distribution<double> dis(0,RealVal[2]); //Initialize standard deviation
-    for (int i=0 ; i<nDataPoint; i++){
-        TestData[i][0] = i - nDataPoint/2;
-        TestData[i][1] = TestData[i][0]*RealVal[0] + RealVal[1] + dis(rng);
+    for (int i=0 ; i<nNode; i++){
+        double var = TrueNodeVar[i] + RealVal[0]; //Includes individual variation
+        normal_distribution<double> dis(TrueNodeExpr[i],var); //Initialize standard deviation
+        for (int j = 0; j < nDataPoint; j++){
+            TestData[j][i] = dis(rng);
+        }
     }
 }
 
 //Add header to output file
 void InitializeFile(){
     out.open("Results.txt");
-    out << "a\tb\tsig2\tAccept" << endl;
+    out << "tau\tdrift\tselection\toptimal" << endl;
     out.close();
 }
 
@@ -59,12 +78,13 @@ void InitializeParameters(){
 
 //Calculate prior probability. Must edit this for each MH algorithm
 double CalcPrior(double Par[nParam]){
-    double a = dUnif(-10,10,Par[0]);
-    double b = dUnif(-10,10,Par[1]);
-    double sd = dUnif(0,30,Par[2]);
+    double tau = dUnif(0,30,Par[0]);
+    double drift = dUnif(0,30,Par[1]);
+    double selection = dUnif(0,2,Par[2]);
+    double optimal = dUnif(0,1000,Par[3]);
     //If probability can't be calculated, pass back -1, which we'll recognize to reject
-    if (a == -1 || sd == -1 || b == -1) return -1;
-    double total = a + b + sd;
+    if (tau == -1 || drift == -1 || selection == -1 || optimal == -1) return -1;
+    double total = tau + drift + selection + optimal;
     return(total);
 }
 
