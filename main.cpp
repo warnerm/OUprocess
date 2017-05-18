@@ -10,7 +10,7 @@
 int boots = 100000,BurnIn = 10000;
 bool Burn = true,accept;
 ofstream out;
-double prob1, prob2;
+double prob1, prob2,prior,likelihood;
 double TestData[nDataPoint][nNode];
 //For the following, define individual variance, phenotypic drift, selection, and optimum expression
 double RealVal[nParam] = {10,5,0.5,80},Prop[nParam],CParam[nParam],stepSize[nParam] = {0.2,0.2,0.05,1};
@@ -18,7 +18,7 @@ double AncestorExpr = 100, AncestorVar = 25;
 double branchTimes[nNode] = {3,2};
 double TrueNodeExpr[nNode];
 double TrueNodeVar[nNode];
-double EstimatedExpr[nNode], EstimatedVar[nNode];
+double EstimatedExpr[nNode], EstimatedVar[nNode],Cov[nNode][nNode];
 MyRNG rng;
 
 
@@ -72,43 +72,51 @@ void InitializeFile(){
 
 //Initialize parameters in middle of distribution
 void InitializeParameters(){
-    CParam[0] = 0;
-    CParam[1] = 0;
-    CParam[2] = 15;
+    CParam[0] = 15;
+    CParam[1] = 15;
+    CParam[2] = 0.3;
+    CParam[3] = 200;
+    std::copy(Prop,Prop+nParam,CParam); //Necessary to calculate Posterior,
+    CalcPrior();
+    CalcLikelihood();
+    CalcPosterior();
 }
 
 //Calculate prior probability. Must edit this for each MH algorithm
-double CalcPrior(double Par[nParam]){
-    double tau = dUnif(0,30,Par[0]);
-    double drift = dUnif(0,30,Par[1]);
-    double selection = dUnif(0,2,Par[2]);
-    double optimal = dUnif(0,1000,Par[3]);
+void CalcPrior(){
+    double tau = dUnif(0,30,Prop[0]);
+    double drift = dUnif(0,30,Prop[1]);
+    double selection = dUnif(0,2,Prop[2]);
+    double optimal = dUnif(0,1000,Prop[3]);
     //If probability can't be calculated, pass back -1, which we'll recognize to reject
-    if (tau == -1 || drift == -1 || selection == -1 || optimal == -1) return -1;
-    double total = tau + drift + selection + optimal;
-    return(total);
+    if (tau == -1 || drift == -1 || selection == -1 || optimal == -1) prior =  -1;
+    else prior = tau + drift + selection + optimal;
 }
 
 //Calculate likelihood
-double CalcLikelihood(double Par[nParam]){
+void CalcLikelihood(){
     CalcEstimatedVars();
-    double Cov[nNode][nNode];
-    for (int i = 0; i < nNode; i++){
-        for (int j = 0; j < nNode; j++){
-            if ( i == j ) Cov[i][j] = EstimatedExpr[i];
-        }
-    }
     double like = 0;
     for (int i = 0; i<nDataPoint; i++){
         double pred = TestData[i][0]*Par[0]+Par[1];
         like = like + dNorm(pred,Par[2],TestData[i][1]);
     }
-    return like;
 }
 
 //Calculate the estimated mean expression and variance in expression from parameter values
 void CalcEstimatedVars(){
-    //
+    for (int i = 0; i < nNode; i++){
+        EstimatedExpr[i] = AncestorExpr*exp(-Prop[2]*branchTimes[i]) + (1 - exp(-Prop[2]*branchTimes[i]))*Prop[3];
+        EstimatedVar[i] = (Prop[1]/(2*Prop[2]))*(1 - exp(-2*Prop[2]*branchTimes[i])) + AncestorVar*exp(-2*Prop[2]*branchTimes[i]);
+    }
+    for (int i = 0; i < nNode; i++){
+        for (int j = 0; j < nNode; j++){
+            if ( i == j ) Cov[i][j] = EstimatedVar[i]; //Covariance with itself is variance
+            else if (i > j) Cov[i][j] = Cov[j][i]; //Already calculated it, so save a bit of time
+            else Cov[i][j] = AncestorVar*exp(-Prop[2]*(branchTimes[i]+branchTimes[j]));
+        }
+    }
+    
 }
 
 //Calculate likelihood of observing the data from a uniform distribution

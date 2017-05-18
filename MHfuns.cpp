@@ -12,11 +12,10 @@ extern int boots;
 //Use Maximum Likelihood to update parameters
 void runML(){
     GenProposal();
-    prob1 = Posterior(Prop);
+    CalcPosterior();
     if (prob1 == -1){
         accept = false;
     } else {
-        prob2 = Posterior(CParam);
         TestProposal();
         if (!Burn) PrintToFile(); //Don't keep burn-in values
     }
@@ -31,21 +30,24 @@ void GenProposal(){
 }
 
 //Calculate posterior probability
-double Posterior(double Par[nParam]){
-    double prior = CalcPrior(Par);
-    if (prior == -1) return -1;
-    double likelihood = CalcLikelihood(Par);
-    return(prior + likelihood);
+void CalcPosterior(){
+    CalcPrior();
+    if (prior == -1) prob1 = -1;
+    else {
+        CalcLikelihood();
+        prob1 = prior + likelihood;
+    }
 }
 
 //Accept or reject proposal
 void TestProposal(){
     uniform_real_distribution<double> dis(0,1);
     double rNum = dis(rng);
-    prob1 = exp(prob1 - prob2);
-    if (rNum < prob1){
+    double prob = exp(prob1 - prob2);
+    if (rNum < prob){
         std::copy(Prop,Prop+nParam,CParam);
         accept = true;
+        prob2 = prob1; //Next round, the posterior for the current parameters is equal to the current proposal
     } else {
         accept = false;
     }
