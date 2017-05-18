@@ -7,7 +7,7 @@
 //
 
 #include "MHfuns.hpp"
-int boots = 100000,BurnIn = 10000;
+int boots = 100000,BurnIn = 0;
 bool Burn = true,accept;
 ofstream out;
 double prob1, prob2,prior,likelihood;
@@ -19,7 +19,7 @@ double branchTimes[nNode] = {3,2};
 double TrueNodeExpr[nNode];
 double TrueNodeVar[nNode];
 double EstimatedExpr[nNode], EstimatedVar[nNode],Cov[nNode][nNode];
-double cmat[nNode - 1][nNode - 1],cofactor;
+double adj[nNode][nNode],inv[nNode][nNode];
 MyRNG rng;
 
 
@@ -36,12 +36,12 @@ int main(int argc, const char * argv[]) {
 //        cout << TestData[i][0] << endl;
 //        cout << TestData[i][1] << endl;
 //    }
-//    for (int i=0; i < BurnIn; i++){
-//        runML();
-//    }
-//    Burn = false; //Begin keeping track of values
-//    for (int i = 0; i < boots; i++)
-//        runML();
+    for (int i=0; i < BurnIn; i++){
+        runML();
+    }
+    Burn = false; //Begin keeping track of values
+    for (int i = 0; i < boots; i++)
+        runML();
     return 0;
 }
 
@@ -102,12 +102,24 @@ void CalcLikelihood(){
 
 //predDiff calculates [x - E[x]]'Cov^-1[x - E[x]], where x is observed expression and E[x] is expected based on parameter values
 double predDiff(){
-    double pred = 0;
+    double temp[nNode][nDataPoint];
+    inverse(Cov);
     for (int i = 0; i < nNode; i++){
-        pred = 0;
+        for (int j = 0; j < nDataPoint; j++){
+            temp[i][j] = (TestData[i][j] - EstimatedExpr[i]); //x - X
+        }
     }
-    //Take in TestData, EstimatedExpr, Cov
-    return(0.5);
+    double total = 0;
+    for (int j = 0; j < nDataPoint; j++){
+        for (int i = 0; i < nNode; i++){
+            double temp2 = 0;
+            for (int k = 0; k < nNode; k++){
+                temp2 = temp2 + temp[k][j]*inv[k][i];
+            }
+            total = total + temp2 * temp[i][j];
+        }
+    }
+    return(total);
 }
 
 //Calculate the estimated mean expression and variance in expression from parameter values

@@ -59,14 +59,8 @@ double determinantOfMatrix(double mat[nNode][nNode], int n)
 
 // Function to get adjoint of A[nNode][nNode] in adj[nNode][nNode].
 //From http://www.geeksforgeeks.org/adjoint-inverse-matrix/
-void adjoint(double A[nNode][nNode],double adj[nNode][nNode])
+void adjoint(double A[nNode][nNode])
 {
-    if (nNode == 1)
-    {
-        adj[0][0] = 1;
-        return;
-    }
-    
     // temp is used to store cofactors of A[][]
     int sign = 1;
     double temp[nNode][nNode];
@@ -91,19 +85,18 @@ void adjoint(double A[nNode][nNode],double adj[nNode][nNode])
 
 // Function to calculate and store inverse, returns false if
 // matrix is singular
-void inverse(double A[nNode][nNode], double inverse[nNode][nNode])
+void inverse(double A[nNode][nNode])
 {
     // Find determinant of A[][]
     double det = determinantOfMatrix(A, nNode);
     
     // Find adjoint
-    double adj[nNode][nNode];
-    adjoint(A, adj);
+    adjoint(A);
     
     // Find Inverse using formula "inverse(A) = adj(A)/det(A)"
     for (int i=0; i<nNode; i++)
         for (int j=0; j<nNode; j++)
-            inverse[i][j] = adj[i][j]/(det);
+            inv[i][j] = adj[i][j]/(det);
 }
 
 
