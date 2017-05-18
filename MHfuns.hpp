@@ -1,0 +1,46 @@
+//
+//  MHfuns.hpp
+//  OUprocess
+//
+//  Created by Michael Warner on 5/18/17.
+//  Copyright © 2017 Michael Warner. All rights reserved.
+//
+
+#ifndef MHfuns_hpp
+#define MHfuns_hpp
+
+#include <stdio.h>
+#include <iostream>
+#include <ctime>
+#include <random>
+#include <fstream>
+#include <string>
+using namespace std;
+
+const int nParam = 3,nDataPoint = 100;
+const double c1 = 0.282095; //sqrt(1/(2*pi))
+void InitializeParameters();
+void InitializeFile();
+void runML();
+void Randomize();
+void GenerateData();
+void GenProposal();
+void TestProposal();
+void PrintToFile();
+double Posterior(double Par[nParam]);
+double CalcPrior(double Par[nParam]);
+double CalcLikelihood(double Par[nParam]);
+double dUnif(double start, double end, double value);
+double dNorm(double mean, double sd, double value);
+typedef mt19937 MyRNG;  // the Mersenne Twister with a popular choice of parameters
+extern double prob1, prob2;
+extern double TestData[nDataPoint][2];
+extern double RealVal[nParam],Prop[nParam],CParam[nParam],stepSize[nParam];
+extern int boots,BurnIn;
+extern bool Burn,accept;
+extern ifstream in;
+extern ofstream out;
+extern MyRNG rng;
+
+
+#endif /* MHfuns_hpp */
