@@ -33,6 +33,7 @@ double CalcLikelihood(double Par[nParam]);
 double dUnif(double start, double end, double value);
 double dNorm(double mean, double sd, double value);
 void CalcTrueVals();
+void CalcEstimatedVars();
 typedef mt19937 MyRNG;  // the Mersenne Twister with a popular choice of parameters
 extern double prob1, prob2;
 extern double TestData[nDataPoint][2];

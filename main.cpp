@@ -18,6 +18,7 @@ double AncestorExpr = 100, AncestorVar = 25;
 double branchTimes[nNode] = {3,2};
 double TrueNodeExpr[nNode];
 double TrueNodeVar[nNode];
+double EstimatedExpr[nNode], EstimatedVar[nNode];
 MyRNG rng;
 
 
@@ -28,8 +29,8 @@ int main(int argc, const char * argv[]) {
 //        cout << TrueNodeExpr[i] << endl;
 //    }
     GenerateData(); //While testing utility of approach
-//    InitializeParameters();
-//    InitializeFile();
+    InitializeParameters();
+    InitializeFile();
 //    for (int i = 0; i < nDataPoint; i++){
 //        cout << TestData[i][0] << endl;
 //        cout << TestData[i][1] << endl;
@@ -90,12 +91,24 @@ double CalcPrior(double Par[nParam]){
 
 //Calculate likelihood
 double CalcLikelihood(double Par[nParam]){
+    CalcEstimatedVars();
+    double Cov[nNode][nNode];
+    for (int i = 0; i < nNode; i++){
+        for (int j = 0; j < nNode; j++){
+            if ( i == j ) Cov[i][j] = EstimatedExpr[i];
+        }
+    }
     double like = 0;
     for (int i = 0; i<nDataPoint; i++){
         double pred = TestData[i][0]*Par[0]+Par[1];
         like = like + dNorm(pred,Par[2],TestData[i][1]);
     }
     return like;
+}
+
+//Calculate the estimated mean expression and variance in expression from parameter values
+void CalcEstimatedVars(){
+    //
 }
 
 //Calculate likelihood of observing the data from a uniform distribution
