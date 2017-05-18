@@ -33,6 +33,8 @@ void CalcLikelihood();
 double predDiff();
 double determinantOfMatrix(double mat[nNode][nNode], int n);
 void getCofactor(double mat[nNode][nNode], double temp[nNode][nNode], int p, int q, int n);
+void inverse(double A[nNode][nNode], double inverse[nNode][nNode]);
+void adjoint(double A[nNode][nNode],double adj[nNode][nNode]);
 double dUnif(double start, double end, double value);
 double dNorm(double mean, double sd, double value);
 void CalcTrueVals();

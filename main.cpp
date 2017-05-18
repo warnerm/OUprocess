@@ -97,11 +97,15 @@ void CalcPrior(){
 //Calculate likelihood of multivariate normal distribution
 void CalcLikelihood(){
     CalcEstimatedVars();
-    likelihood = -0.5*determinantOfMatrix(Cov,nNode) -0.5*predDiff(); //predDiff calculates [x - E[x]]'Cov^-1[x - E[x]]
+    likelihood = -(nNode/2)*log10(determinantOfMatrix(Cov,nNode)) -0.5*predDiff(); //predDiff calculates [x - E[x]]'Cov^-1[x - E[x]]
 }
 
 //predDiff calculates [x - E[x]]'Cov^-1[x - E[x]], where x is observed expression and E[x] is expected based on parameter values
 double predDiff(){
+    double pred = 0;
+    for (int i = 0; i < nNode; i++){
+        pred = 0;
+    }
     //Take in TestData, EstimatedExpr, Cov
     return(0.5);
 }
