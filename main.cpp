@@ -22,12 +22,12 @@ void GenProposal();
 void TestProposal();
 void PrintToFile();
 typedef mt19937 MyRNG;  // the Mersenne Twister with a popular choice of parameters
-int boots = 1000,BurnIn = 100;
-const int nParam = 3,nDataPoint = 20;
+int boots = 100000,BurnIn = 10000;
+const int nParam = 3,nDataPoint = 100;
 const double c1 = 0.282095; //sqrt(1/(2*pi))
 double prob1, prob2;
 double TestData[nDataPoint][2];
-double RealVal[nParam] = {1,5,10},Prop[nParam],CParam[nParam],stepSize[nParam] = {0.1,0.1,0.3};
+double RealVal[nParam] = {1,5,5},Prop[nParam],CParam[nParam],stepSize[nParam] = {0.2,0.2,0.5};
 bool Burn = true,accept;
 MyRNG rng;
 double Posterior(double Par[nParam]);
@@ -35,16 +35,19 @@ double CalcPrior(double Par[nParam]);
 double CalcLikelihood(double Par[nParam]);
 double dUnif(double start, double end, double value);
 double dNorm(double mean, double sd, double value);
+string ofile = "~/Results.txt";
 ifstream in;
 ofstream out;
-string ofile = "Results.txt";
-
 
 
 int main(int argc, const char * argv[]) {
     GenerateData(); //While testing utility of approach
     InitializeParameters();
     InitializeFile();
+    for (int i = 0; i < nDataPoint; i++){
+        cout << TestData[i][0] << endl;
+        cout << TestData[i][1] << endl;
+    }
     for (int i=0; i < BurnIn; i++){
         runML();
     }
@@ -56,18 +59,6 @@ int main(int argc, const char * argv[]) {
 
 //Generate dummy data from random values centered around true values
 void GenerateData(){
-    //Generate dummy data from random values centered around true values
-}
-
-//Add header to output file
-void InitializeFile(){
-    out.open(ofile.c_str());
-    out << "a\tb\tsig2\tAccept\n" << endl;
-    out.close();
-}
-
-//Initialize parameters based on priors
-void InitializeParameters(){
     normal_distribution<double> dis(0,RealVal[2]); //Initialize standard deviation
     for (int i=0 ; i<nDataPoint; i++){
         TestData[i][0] = i - nDataPoint/2;
@@ -75,13 +66,31 @@ void InitializeParameters(){
     }
 }
 
+//Add header to output file
+void InitializeFile(){
+    out.open("Results.txt");
+    out << "a\tb\tsig2\tAccept" << endl;
+    out.close();
+}
+
+//Initialize parameters in middle of distribution
+void InitializeParameters(){
+    CParam[0] = 0;
+    CParam[1] = 0;
+    CParam[2] = 15;
+}
+
 //Use Maximum Likelihood to update parameters
 void runML(){
     GenProposal();
     prob1 = Posterior(Prop);
-    prob2 = Posterior(CParam);
-    TestProposal();
-    if (!Burn) PrintToFile(); //Don't keep burn-in values
+    if (prob1 == -1){
+        accept = false;
+    } else {
+        prob2 = Posterior(CParam);
+        TestProposal();
+        if (!Burn) PrintToFile(); //Don't keep burn-in values
+    }
 }
 
 //Generate proposal parameters based on values, priors
@@ -95,6 +104,7 @@ void GenProposal(){
 //Calculate posterior probability
 double Posterior(double Par[nParam]){
     double prior = CalcPrior(Par);
+    if (prior == -1) return -1;
     double likelihood = CalcLikelihood(Par);
     return(prior + likelihood);
 }
@@ -114,8 +124,9 @@ void TestProposal(){
 
 //Print current parameter states, whether proposal was accepted
 void PrintToFile(){
-    out.open(ofile.c_str());
-    for (int i = 0; i < (nParam+1); i++){
+    ofstream out;
+    out.open("Results.txt",ios::app);
+    for (int i = 0; i < (nParam); i++){
         out << CParam[i] << '\t';
     }
     out << accept << endl;
@@ -146,7 +157,7 @@ double CalcLikelihood(double Par[nParam]){
 //Calculate likelihood of observing the data from a uniform distribution
 double dUnif(double start, double end, double value){
     if (value<start || value>end){
-        return 1;//Will interpret this value as impossible and skip
+        return -1;//Will interpret this value as impossible and skip
     } else {
         double prob = end - start + 1;
         prob = 1/prob;
