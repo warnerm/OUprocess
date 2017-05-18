@@ -93,14 +93,22 @@ void CalcPrior(){
     else prior = tau + drift + selection + optimal;
 }
 
-//Calculate likelihood
+//Calculate likelihood of multivariate normal distribution
 void CalcLikelihood(){
     CalcEstimatedVars();
-    double like = 0;
-    for (int i = 0; i<nDataPoint; i++){
-        double pred = TestData[i][0]*Par[0]+Par[1];
-        like = like + dNorm(pred,Par[2],TestData[i][1]);
-    }
+    likelihood = -0.5*determinant(Cov) -0.5*predDiff(); //predDiff calculates [x - E[x]]'Cov^-1[x - E[x]]
+}
+
+//general determinant calculation of matrix
+double determinant(double mat[nNode][nNode]){
+    //
+    return(0.5);
+}
+
+//predDiff calculates [x - E[x]]'Cov^-1[x - E[x]], where x is observed expression and E[x] is expected based on parameter values
+double predDiff(){
+    //Take in TestData, EstimatedExpr, Cov
+    return(0.5);
 }
 
 //Calculate the estimated mean expression and variance in expression from parameter values

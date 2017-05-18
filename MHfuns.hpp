@@ -30,6 +30,8 @@ void PrintToFile();
 void CalcPosterior();
 void CalcPrior();
 void CalcLikelihood();
+double predDiff();
+double determinant(double mat[nNode][nNode]);
 double dUnif(double start, double end, double value);
 double dNorm(double mean, double sd, double value);
 void CalcTrueVals();
