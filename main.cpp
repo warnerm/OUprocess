@@ -19,6 +19,7 @@ double branchTimes[nNode] = {3,2};
 double TrueNodeExpr[nNode];
 double TrueNodeVar[nNode];
 double EstimatedExpr[nNode], EstimatedVar[nNode],Cov[nNode][nNode];
+double cmat[nNode - 1][nNode - 1],cofactor;
 MyRNG rng;
 
 
@@ -96,13 +97,7 @@ void CalcPrior(){
 //Calculate likelihood of multivariate normal distribution
 void CalcLikelihood(){
     CalcEstimatedVars();
-    likelihood = -0.5*determinant(Cov) -0.5*predDiff(); //predDiff calculates [x - E[x]]'Cov^-1[x - E[x]]
-}
-
-//general determinant calculation of matrix
-double determinant(double mat[nNode][nNode]){
-    //
-    return(0.5);
+    likelihood = -0.5*determinantOfMatrix(Cov,nNode) -0.5*predDiff(); //predDiff calculates [x - E[x]]'Cov^-1[x - E[x]]
 }
 
 //predDiff calculates [x - E[x]]'Cov^-1[x - E[x]], where x is observed expression and E[x] is expected based on parameter values
