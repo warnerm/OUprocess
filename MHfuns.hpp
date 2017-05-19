@@ -17,7 +17,7 @@
 #include <string>
 using namespace std;
 
-const int nParam = 4,nDataPoint = 5,nNode=2;
+const int nParam = 4,nDataPoint = 5,nNode=4;
 const double c1 = 0.282095; //sqrt(1/(2*pi))
 void InitializeParameters();
 void InitializeFile();
@@ -41,7 +41,7 @@ void CalcTrueVals();
 void CalcEstimatedVars();
 typedef mt19937 MyRNG;  // the Mersenne Twister with a popular choice of parameters
 extern double prob1, prob2, prior, likelihood;
-extern double TestData[nDataPoint][2];
+extern double TestData[nDataPoint][nNode];
 extern double RealVal[nParam],Prop[nParam],CParam[nParam],stepSize[nParam];
 extern int boots,BurnIn;
 extern bool Burn,accept;

@@ -7,15 +7,15 @@
 //
 
 #include "MHfuns.hpp"
-int boots = 50000,BurnIn = 10000;
+int boots = 10000,BurnIn = 1000;
 bool Burn = true,accept;
 ofstream out;
 double prob1, prob2,prior,likelihood;
 double TestData[nDataPoint][nNode];
 //For the following, define individual variance, phenotypic drift, selection, and optimum expression
-double RealVal[nParam] = {10,5,0.9,80},Prop[nParam],CParam[nParam],stepSize[nParam] = {0.25,0.25,0.05,2};
+double RealVal[nParam] = {10,5,0.9,80},Prop[nParam],CParam[nParam],stepSize[nParam] = {0.1,0.1,0.1,1};
 double AncestorExpr = 100, AncestorVar = 25;
-double branchTimes[nNode] = {3,2};
+double branchTimes[nNode] = {30,20};
 double TrueNodeExpr[nNode];
 double TrueNodeVar[nNode];
 double EstimatedExpr[nNode], EstimatedVar[nNode],Cov[nNode][nNode];
@@ -28,13 +28,23 @@ int main(int argc, const char * argv[]) {
     GenerateData(); //While testing utility of approach
     InitializeParameters();
     InitializeFile();
-    for (int i=0; i < BurnIn; i++){
-        runML();
+    double testmat[4][4] = {{1.5,3,0,-8.9},{-3.3,4.2,4.5,0},{-9.8,0,0,1.9},{-9.8,0,5.5,1.9}};
+    double mat = determinantOfMatrix(testmat,4);
+    inverse(testmat);
+    
+    for (int i = 0;i < 4; i++){
+        for (int j = 0; j < 4; j++){
+            cout << inv[i][j] << endl;
+        }
     }
-    Burn = false; //Begin keeping track of values
-    for (int i = 0; i < boots; i++){
-        runML();
-    }
+    cout << mat << endl;
+    //for (int i=0; i < BurnIn; i++){
+    //    runML();
+    //}
+    //Burn = false; //Begin keeping track of values
+    //for (int i = 0; i < boots; i++){
+    //    runML();
+    //}
     return 0;
 }
 
