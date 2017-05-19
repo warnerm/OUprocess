@@ -57,7 +57,7 @@ void TestProposal(){
 void PrintToFile(){
     ofstream out;
     out.open("Results.txt",ios::app);
-    for (int i = 0; i < (nParam); i++){
+    for (int i = 0; i < nParam; i++){
         out << CParam[i] << '\t';
     }
     out << accept << endl;

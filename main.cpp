@@ -7,13 +7,13 @@
 //
 
 #include "MHfuns.hpp"
-int boots = 100000,BurnIn = 0;
+int boots = 500000,BurnIn = 100000;
 bool Burn = true,accept;
 ofstream out;
 double prob1, prob2,prior,likelihood;
 double TestData[nDataPoint][nNode];
 //For the following, define individual variance, phenotypic drift, selection, and optimum expression
-double RealVal[nParam] = {10,5,0.5,80},Prop[nParam],CParam[nParam],stepSize[nParam] = {0.2,0.2,0.05,1};
+double RealVal[nParam] = {10,5,0.5,80},Prop[nParam],CParam[nParam],stepSize[nParam] = {0.25,0.25,0.05,2};
 double AncestorExpr = 100, AncestorVar = 25;
 double branchTimes[nNode] = {3,2};
 double TrueNodeExpr[nNode];
@@ -25,23 +25,16 @@ MyRNG rng;
 
 int main(int argc, const char * argv[]) {
     CalcTrueVals();
-//    for (int i = 0; i < nNode; i++){
-//        cout << TrueNodeVar[i] << endl;
-//        cout << TrueNodeExpr[i] << endl;
-//    }
     GenerateData(); //While testing utility of approach
     InitializeParameters();
     InitializeFile();
-//    for (int i = 0; i < nDataPoint; i++){
-//        cout << TestData[i][0] << endl;
-//        cout << TestData[i][1] << endl;
-//    }
     for (int i=0; i < BurnIn; i++){
         runML();
     }
     Burn = false; //Begin keeping track of values
-    for (int i = 0; i < boots; i++)
+    for (int i = 0; i < boots; i++){
         runML();
+    }
     return 0;
 }
 
@@ -67,7 +60,7 @@ void GenerateData(){
 //Add header to output file
 void InitializeFile(){
     out.open("Results.txt");
-    out << "tau\tdrift\tselection\toptimal" << endl;
+    out << "tau\tdrift\tselection\toptimal\taccept" << endl;
     out.close();
 }
 
@@ -77,10 +70,11 @@ void InitializeParameters(){
     CParam[1] = 15;
     CParam[2] = 0.3;
     CParam[3] = 200;
-    std::copy(Prop,Prop+nParam,CParam); //Necessary to calculate Posterior,
+    std::copy(CParam,CParam+nParam,Prop); //Necessary to calculate Posterior,
     CalcPrior();
     CalcLikelihood();
     CalcPosterior();
+    prob2 = prob1;
 }
 
 //Calculate prior probability. Must edit this for each MH algorithm
