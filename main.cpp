@@ -7,13 +7,13 @@
 //
 
 #include "MHfuns.hpp"
-int boots = 500000,BurnIn = 100000;
+int boots = 50000,BurnIn = 10000;
 bool Burn = true,accept;
 ofstream out;
 double prob1, prob2,prior,likelihood;
 double TestData[nDataPoint][nNode];
 //For the following, define individual variance, phenotypic drift, selection, and optimum expression
-double RealVal[nParam] = {10,5,0.5,80},Prop[nParam],CParam[nParam],stepSize[nParam] = {0.25,0.25,0.05,2};
+double RealVal[nParam] = {10,5,0.9,80},Prop[nParam],CParam[nParam],stepSize[nParam] = {0.25,0.25,0.05,2};
 double AncestorExpr = 100, AncestorVar = 25;
 double branchTimes[nNode] = {3,2};
 double TrueNodeExpr[nNode];
@@ -96,21 +96,18 @@ void CalcLikelihood(){
 
 //predDiff calculates [x - E[x]]'Cov^-1[x - E[x]], where x is observed expression and E[x] is expected based on parameter values
 double predDiff(){
-    double temp[nNode][nDataPoint];
-    inverse(Cov);
-    for (int i = 0; i < nNode; i++){
-        for (int j = 0; j < nDataPoint; j++){
-            temp[i][j] = (TestData[i][j] - EstimatedExpr[i]); //x - X
-        }
-    }
+    double temp[nNode];
     double total = 0;
+    inverse(Cov);
     for (int j = 0; j < nDataPoint; j++){
+        //Deviation of observed values from estimator
         for (int i = 0; i < nNode; i++){
-            double temp2 = 0;
-            for (int k = 0; k < nNode; k++){
-                temp2 = temp2 + temp[k][j]*inv[k][i];
+            temp[i] = (TestData[j][i] - EstimatedExpr[i]); //x - X
+        }
+        for (int i = 0; i < nNode; i++){
+            for (int k = 0; k< nNode; k++){
+                total = total + temp[i]*temp[i]*inv[i][k];
             }
-            total = total + temp2 * temp[i][j];
         }
     }
     return(total);
@@ -121,6 +118,7 @@ void CalcEstimatedVars(){
     for (int i = 0; i < nNode; i++){
         EstimatedExpr[i] = AncestorExpr*exp(-Prop[2]*branchTimes[i]) + (1 - exp(-Prop[2]*branchTimes[i]))*Prop[3];
         EstimatedVar[i] = (Prop[1]/(2*Prop[2]))*(1 - exp(-2*Prop[2]*branchTimes[i])) + AncestorVar*exp(-2*Prop[2]*branchTimes[i]);
+        EstimatedVar[i] = EstimatedVar[i] + Prop[0]; //Add individual-level variance
     }
     for (int i = 0; i < nNode; i++){
         for (int j = 0; j < nNode; j++){
