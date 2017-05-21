@@ -7,15 +7,15 @@
 //
 
 #include "MHfuns.hpp"
-int boots = 10000,BurnIn = 1000;
+int boots = 1000000,BurnIn = 100000;
 bool Burn = true,accept;
 ofstream out;
 double prob1, prob2,prior,likelihood;
 double TestData[nDataPoint][nNode];
 //For the following, define individual variance, phenotypic drift, selection, and optimum expression
-double RealVal[nParam] = {5,5,0.9,80},Prop[nParam],CParam[nParam],stepSize[nParam] = {0.1,0.1,0.1,1};
-double AncestorExpr = 100, AncestorVar = 25;
-double branchTimes[nNode] = {30,20,35,80};
+double RealVal[nParam] = {5,20,3,80},Prop[nParam],CParam[nParam],stepSize[nParam] = {0.25,0.25,0.25,1};
+double AncestorExpr = 250, AncestorVar = 2;
+double branchTimes[nNode] = {0.1,1,3,5};
 double TrueNodeExpr[nNode];
 double TrueNodeVar[nNode];
 double EstimatedExpr[nNode], EstimatedVar[nNode],Cov[nNode][nNode];
@@ -26,6 +26,12 @@ int main(int argc, const char * argv[]) {
     GenerateData(); //While testing utility of approach
     InitializeParameters();
     InitializeFile();
+    for (int i = 0; i < nNode; i++){
+        cout << TrueNodeExpr[i] << endl;
+        for (int j = 0; j < nDataPoint; j++){
+            cout << "test" << TestData[j][i] << endl;
+        }
+    }
     for (int i=0; i < BurnIn; i++){
         runML();
     }
@@ -64,10 +70,10 @@ void InitializeFile(){
 
 //Initialize parameters in middle of distribution
 void InitializeParameters(){
-    CParam[0] = 15;
-    CParam[1] = 15;
-    CParam[2] = 0.3;
-    CParam[3] = 200;
+    CParam[0] = 7;
+    CParam[1] = 3;
+    CParam[2] = 0.1;
+    CParam[3] = 120;
     std::copy(CParam,CParam+nParam,Prop); //Necessary to calculate Posterior,
     CalcPrior();
     CalcLikelihood();
@@ -79,7 +85,7 @@ void InitializeParameters(){
 void CalcPrior(){
     double tau = dUnif(0,30,Prop[0]);
     double drift = dUnif(0,30,Prop[1]);
-    double selection = dUnif(0,2,Prop[2]);
+    double selection = dUnif(0,30,Prop[2]);
     double optimal = dUnif(0,1000,Prop[3]);
     //If probability can't be calculated, pass back -1, which we'll recognize to reject
     if (tau == -1 || drift == -1 || selection == -1 || optimal == -1) prior =  -1;

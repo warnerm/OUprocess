@@ -17,7 +17,7 @@
 #include <string>
 using namespace std;
 
-const int nParam = 4,nDataPoint = 5,nNode=4;
+const int nParam = 4,nDataPoint = 100,nNode=4;
 const double c1 = 0.282095; //sqrt(1/(2*pi))
 void InitializeParameters();
 void InitializeFile();
