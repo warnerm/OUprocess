@@ -2,7 +2,7 @@
 #include "MHfuns.hpp"
 // Function to get cofactor of mat[p][q] in temp[][]. n is current
 // dimension of mat[][]
-void getCofactor(double mat[nNode][nNode], double temp[nNode][nNode], int p, int q, int n)
+void getCofactor(double mat[nTip][nTip], double temp[nTip][nTip], int p, int q, int n)
 {
     int i = 0, j = 0;
     
@@ -31,7 +31,7 @@ void getCofactor(double mat[nNode][nNode], double temp[nNode][nNode], int p, int
 
 /* Recursive function for finding determinant of matrix.
  n is current dimension of mat[][]. */
-double determinantOfMatrix(double mat[nNode][nNode], int n)
+double determinantOfMatrix(double mat[nTip][nTip], int n)
 {
     double D = 0; // Initialize result
     
@@ -39,7 +39,7 @@ double determinantOfMatrix(double mat[nNode][nNode], int n)
     if (n == 1)
         return mat[0][0];
     
-    double temp[nNode][nNode]; // To store cofactors
+    double temp[nTip][nTip]; // To store cofactors
     
     int sign = 1;  // To store sign multiplier
     
@@ -57,20 +57,20 @@ double determinantOfMatrix(double mat[nNode][nNode], int n)
     return D;
 }
 
-// Function to get adjoint of A[nNode][nNode] in adj[nNode][nNode].
+// Function to get adjoint of A[nTip][nTip] in adj[nTip][nTip].
 //From http://www.geeksforgeeks.org/adjoint-inverse-matrix/
-void adjoint(double A[nNode][nNode])
+void adjoint(double A[nTip][nTip])
 {
     // temp is used to store cofactors of A[][]
     int sign = 1;
-    double temp[nNode][nNode];
+    double temp[nTip][nTip];
     
-    for (int i=0; i<nNode; i++)
+    for (int i=0; i<nTip; i++)
     {
-        for (int j=0; j<nNode; j++)
+        for (int j=0; j<nTip; j++)
         {
             // Get cofactor of A[i][j]
-            getCofactor(A, temp, i, j, nNode);
+            getCofactor(A, temp, i, j, nTip);
             
             // sign of adj[j][i] positive if sum of row
             // and column indexes is even.
@@ -78,24 +78,24 @@ void adjoint(double A[nNode][nNode])
             
             // Interchanging rows and columns to get the
             // transpose of the cofactor matrix
-            adj[j][i] = (sign)*(determinantOfMatrix(temp, nNode-1));
+            adj[j][i] = (sign)*(determinantOfMatrix(temp, nTip-1));
         }
     }
 }
 
 // Function to calculate and store inverse, returns false if
 // matrix is singular
-void inverse(double A[nNode][nNode])
+void inverse(double A[nTip][nTip])
 {
     // Find determinant of A[][]
-    double det = determinantOfMatrix(A, nNode);
+    double det = determinantOfMatrix(A, nTip);
     
     // Find adjoint
     adjoint(A);
     
     // Find Inverse using formula "inverse(A) = adj(A)/det(A)"
-    for (int i=0; i<nNode; i++)
-        for (int j=0; j<nNode; j++)
+    for (int i=0; i<nTip; i++)
+        for (int j=0; j<nTip; j++)
             inv[i][j] = adj[i][j]/(det);
 }
 
