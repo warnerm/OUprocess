@@ -13,15 +13,13 @@ ofstream out;
 double prob1, prob2,prior,likelihood;
 double TestData[nDataPoint][nNode];
 //For the following, define individual variance, phenotypic drift, selection, and optimum expression
-double RealVal[nParam] = {10,5,0.9,80},Prop[nParam],CParam[nParam],stepSize[nParam] = {0.1,0.1,0.1,1};
+double RealVal[nParam] = {5,5,0.9,80},Prop[nParam],CParam[nParam],stepSize[nParam] = {0.1,0.1,0.1,1};
 double AncestorExpr = 100, AncestorVar = 25;
 double branchTimes[nNode] = {30,20,35,80};
 double TrueNodeExpr[nNode];
 double TrueNodeVar[nNode];
 double EstimatedExpr[nNode], EstimatedVar[nNode],Cov[nNode][nNode];
 double adj[nNode][nNode],inv[nNode][nNode];
-MyRNG rng;
-
 
 int main(int argc, const char * argv[]) {
     CalcTrueVals();
@@ -59,7 +57,7 @@ void GenerateData(){
 
 //Add header to output file
 void InitializeFile(){
-    out.open("Results.txt");
+    out.open("Results2.txt");
     out << "tau\tdrift\tselection\toptimal\taccept" << endl;
     out.close();
 }

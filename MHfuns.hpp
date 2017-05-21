@@ -39,7 +39,6 @@ double dUnif(double start, double end, double value);
 double dNorm(double mean, double sd, double value);
 void CalcTrueVals();
 void CalcEstimatedVars();
-typedef mt19937 MyRNG;  // the Mersenne Twister with a popular choice of parameters
 extern double prob1, prob2, prior, likelihood;
 extern double TestData[nDataPoint][nNode];
 extern double RealVal[nParam],Prop[nParam],CParam[nParam],stepSize[nParam];
@@ -47,8 +46,11 @@ extern int boots,BurnIn;
 extern bool Burn,accept;
 extern ifstream in;
 extern ofstream out;
-extern MyRNG rng;
 extern double adj[nNode][nNode],inv[nNode][nNode];
+static std::random_device rd; // random device engine, usually based on /dev/random on UNIX-like systems
+// initialize Mersennes' twister using rd to generate the seed
+static std::mt19937 rng(rd());
+
 
 
 

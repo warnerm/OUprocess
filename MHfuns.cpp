@@ -56,7 +56,7 @@ void TestProposal(){
 //Print current parameter states, whether proposal was accepted
 void PrintToFile(){
     ofstream out;
-    out.open("Results.txt",ios::app);
+    out.open("Results2.txt",ios::app);
     for (int i = 0; i < nParam; i++){
         out << CParam[i] << '\t';
     }
