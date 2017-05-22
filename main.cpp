@@ -17,7 +17,7 @@ double TestData[nDataPoint][nTip];
 //For the following, define individual variance, phenotypic drift, selection, and optimum expression
 double RealVal[nParam] = {0,20,3,80},Prop[nParam],CParam[nParam],stepSize[nParam] = {0.25,2,0.25,1};
 double AncestorExpr = 250, AncestorVar = 2;
-double branchTimes[nNode] = {0,1,2,4};
+double branchTimes[nNode] = {0,1,2,4,2,1};
 double TrueTipExpr[nNode];
 double TrueTipVar[nNode];
 double EstimatedExpr[nNode], EstimatedVar[nNode],Cov[nTip][nTip];
@@ -35,12 +35,17 @@ int main(int argc, const char * argv[]) {
     GenerateData(); //While testing utility of approach
     InitializeParameters();
     InitializeFile();
-//    for (int i = 0; i < nTip; i++){
-//        cout << TrueTipVar[i] << endl;
-//        for (int j = 0; j < nDataPoint; j++){
-//            cout << "test" << TestData[j][i] << endl;
-//        }
+//    for (int i = 0; i < nNode; i++){
+//        cout << i << "anc" << ancestor[i] << endl;
+////        cout << TrueTipExpr[i] << endl;
+////        cout << TrueTipVar[i] << endl;
 //    }
+    for (int i = 0; i < nTip; i++){
+        for (int j = 0; j < nTip; j++){
+           
+        }
+
+    }
     for (int i=0; i < BurnIn; i++){
         runML();
     }
@@ -58,7 +63,7 @@ void InitializeIndex(){
         ancestor[i] = i - 1;
     }
     for (int i = nTip; i < (nNode - 1); i++){ //Tips, before last one
-        ancestor[i] = i - (nNode - 1);
+        ancestor[i] = i - (nTip - 1);
     }
     ancestor[nNode - 1] = nTip - 1;//Last tip shares ancestor with tip before it
 }
@@ -71,11 +76,11 @@ void InitializeTipDist(){
             else MutAncestor[i][j] = i + 1;
             if (i > j) TipDist[i][j] = TipDist[j][i];
             else {
-                TipDist[i][j] = branchTimes[i] + branchTimes[j];
-                int temp = i+1;
-                if (i == nTip - 1) temp = i; //For last tip, reduce index by 1.
-                int ancJ = j + 1;
-                while (temp > ancJ){
+                TipDist[i][j] = branchTimes[nTip+i] + branchTimes[nTip+j];
+                int temp = ancestor[j+nTip];
+                int ancI = ancestor[i + nTip];
+                //Only j's ancestor can be greater because we restrict to cases where i < j
+                if (temp > ancI){
                     TipDist[i][j] = TipDist[i][j] + branchTimes[temp]; //Adds branch length of interior node to nearest interior node
                     temp--;
                 }
