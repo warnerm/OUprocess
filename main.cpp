@@ -7,7 +7,7 @@
 //
 
 #include "MHfuns.hpp"
-int boots = 100000,BurnIn = 5000;
+int boots = 10000,BurnIn = 10000;
 const int nNode = nTip*2;
 int ancestor[nNode];
 bool Burn = true,accept;
@@ -15,9 +15,9 @@ ofstream out;
 double prob1, prob2,prior,likelihood;
 double TestData[nDataPoint][nTip];
 //For the following, define individual variance, phenotypic drift, selection, and optimum expression
-double RealVal[nParam] = {0,20,3,80},Prop[nParam],CParam[nParam],stepSize[nParam] = {0.25,2,0.25,1};
-double AncestorExpr = 250, AncestorVar = 2;
-double branchTimes[nNode] = {0,0.1,0.5,4,2,0.05};
+double RealVal[nParam] = {0,2,2,80},Prop[nParam],CParam[nParam],stepSize[nParam] = {0.5,0.5,0.25,1};
+double AncestorExpr = 250, AncestorVar = 10;
+double branchTimes[nNode] = {0,0.1,0.3,3,0.4,1};
 double TrueTipExpr[nNode];
 double TrueTipVar[nNode];
 double EstimatedExpr[nNode], EstimatedVar[nNode],Cov[nTip][nTip];
@@ -35,11 +35,6 @@ int main(int argc, const char * argv[]) {
     GenerateData(); //While testing utility of approach
     InitializeParameters();
     InitializeFile();
-//    for (int i = 0; i < nNode; i++){
-//        cout << i << "anc" << ancestor[i] << endl;
-////        cout << TrueTipExpr[i] << endl;
-////        cout << TrueTipVar[i] << endl;
-//    }
     for (int i = 0; i < nTip; i++){
         for (int j = 0; j < nTip; j++){
            
@@ -48,12 +43,12 @@ int main(int argc, const char * argv[]) {
     }
     for (int i=0; i < BurnIn; i++){
         runML();
-        cout << likelihood << endl;
-        cout << "pre" << predDiff() << endl;
-        for (int j = 0; j < nTip; j++){
-            cout << EstimatedVar[j] << endl;
-            cout << "expr" << EstimatedExpr[j] << endl;
-        }
+//        cout << likelihood << endl;
+//        cout << "pre" << predDiff() << endl;
+//        for (int j = 0; j < nTip; j++){
+//            cout << EstimatedVar[j] << endl;
+//            cout << "expr" << EstimatedExpr[j] << endl;
+//        }
     }
     Burn = false; //Begin keeping track of values
     for (int i = 0; i < boots; i++){
@@ -136,7 +131,7 @@ void InitializeFile(){
 
 //Initialize parameters in middle of distribution
 void InitializeParameters(){
-    CParam[0] = 7;
+    CParam[0] = 3;
     CParam[1] = 3;
     CParam[2] = 0.1;
     CParam[3] = 120;
@@ -154,14 +149,20 @@ void CalcPrior(){
     double selection = dUnif(0,30,Prop[2]);
     double optimal = dUnif(0,1000,Prop[3]);
     //If probability can't be calculated, pass back -1, which we'll recognize to reject
-    if (tau == -1 || drift == -1 || selection == -1 || optimal == -1) prior =  -1;
+    if (tau == -1 || drift == -1 || selection == -1 || optimal == -1) {
+        prior =  -1;
+    }
     else prior = tau + drift + selection + optimal;
 }
 
 //Calculate likelihood of multivariate normal distribution
 void CalcLikelihood(){
     CalcEstimatedVars();
-    likelihood = -(nTip/2)*log10(determinantOfMatrix(Cov,nTip)) -0.5*predDiff(); //predDiff calculates [x - E[x]]'Cov^-1[x - E[x]]
+    //likelihood = -(nTip/2)*log10(determinantOfMatrix(Cov,nTip)) -0.5*predDiff(); //predDiff calculates [x - E[x]]'Cov^-1[x - E[x]]
+    likelihood = -0.5*predDiff(); //predDiff calculates [x - E[x]]'Cov^-1[x - E[x]]
+
+    cout << "det" << log10(determinantOfMatrix(Cov,nTip)) << endl;
+    cout << "pred" << predDiff() << endl;
 }
 
 //predDiff calculates [x - E[x]]'Cov^-1[x - E[x]], where x is observed expression and E[x] is expected based on parameter values
@@ -176,7 +177,7 @@ double predDiff(){
         }
         for (int i = 0; i < nTip; i++){
             for (int k = 0; k< nTip; k++){
-                total = total + temp[i]*temp[i]*inv[i][k];
+                total = total + temp[i]*inv[i][k]*temp[k];
             }
         }
     }
@@ -187,12 +188,11 @@ double predDiff(){
 void CalcEstimatedVars(){
     for (int i = 1; i < nNode; i++){ //skip root of tree
         EstimatedExpr[i] = CalcExpr(EstimatedExpr[ancestor[i]], Prop, i);
-        EstimatedVar[i] = CalcExpr(EstimatedVar[ancestor[i]], Prop, i);
-        EstimatedVar[i] = EstimatedVar[i] + Prop[0]; //Add individual-level variance
+        EstimatedVar[i] = CalcVariance(EstimatedVar[ancestor[i]], Prop, i);
     }
     for (int i = 0; i < nTip; i++){
         for (int j = 0; j < nTip; j++){
-            if ( i == j ) Cov[i][j] = EstimatedVar[i + nTip]; //Covariance with itself is variance
+            if ( i == j ) Cov[i][j] = EstimatedVar[i + nTip]; //Covariance with itself is variance; add individual variance here
             else if (i > j) Cov[i][j] = Cov[j][i]; //Already calculated it, so save a bit of time
             else Cov[i][j] = EstimatedVar[MutAncestor[i][j]]*exp(-Prop[2]*TipDist[i][j]);
         }
