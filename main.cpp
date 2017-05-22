@@ -7,7 +7,7 @@
 //
 
 #include "MHfuns.hpp"
-int boots = 10000,BurnIn = 10000;
+int boots = 1000000,BurnIn = 100000;
 const int nNode = nTip*2;
 int ancestor[nNode];
 bool Burn = true,accept;
@@ -15,7 +15,7 @@ ofstream out;
 double prob1, prob2,prior,likelihood;
 double TestData[nDataPoint][nTip];
 //For the following, define individual variance, phenotypic drift, selection, and optimum expression
-double RealVal[nParam] = {0,2,2,80},Prop[nParam],CParam[nParam],stepSize[nParam] = {0.5,0.5,0.25,1};
+double RealVal[nParam] = {0,10,2,80},Prop[nParam],CParam[nParam],stepSize[nParam] = {0.5,0.5,0.25,1};
 double AncestorExpr = 250, AncestorVar = 10;
 double branchTimes[nNode] = {0,0.1,0.3,3,0.4,1};
 double TrueTipExpr[nNode];
@@ -113,9 +113,9 @@ double CalcExpr(double expr, double Par[nParam],int branch){
 
 //Generate dummy data from random values centered around true values
 void GenerateData(){
-    for (int i=nTip ; i<nNode; i++){ //Don't generate values for interior nodes
-        double var = TrueTipVar[i] + RealVal[0]; //Includes individual variation
-        normal_distribution<double> dis(TrueTipExpr[i],var); //Initialize standard deviation
+    for (int i=0 ; i<nTip; i++){ //Don't generate values for interior nodes
+        double var = TrueTipVar[i+nTip] + RealVal[0]; //Includes individual variation
+        normal_distribution<double> dis(TrueTipExpr[i+nTip],var); //Initialize standard deviation
         for (int j = 0; j < nDataPoint; j++){
             TestData[j][i] = dis(rng);
         }
@@ -158,9 +158,7 @@ void CalcPrior(){
 //Calculate likelihood of multivariate normal distribution
 void CalcLikelihood(){
     CalcEstimatedVars();
-    //likelihood = -(nTip/2)*log10(determinantOfMatrix(Cov,nTip)) -0.5*predDiff(); //predDiff calculates [x - E[x]]'Cov^-1[x - E[x]]
-    likelihood = -0.5*predDiff(); //predDiff calculates [x - E[x]]'Cov^-1[x - E[x]]
-
+    likelihood = -(nDataPoint/2)*log10(determinantOfMatrix(Cov,nTip)) -0.5*predDiff(); //predDiff calculates [x - E[x]]'Cov^-1[x - E[x]]
     cout << "det" << log10(determinantOfMatrix(Cov,nTip)) << endl;
     cout << "pred" << predDiff() << endl;
 }
