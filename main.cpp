@@ -7,7 +7,7 @@
 //
 
 #include "MHfuns.hpp"
-int boots = 1000000,BurnIn = 100000;
+int boots = 100000,BurnIn = 10000;
 const int nNode = nTip*2;
 int ancestor[nNode];
 bool Burn = true,accept;
@@ -15,9 +15,9 @@ ofstream out;
 double prob1, prob2,prior,likelihood;
 double TestData[nDataPoint][nTip];
 //For the following, define individual variance, phenotypic drift, selection, and optimum expression
-double RealVal[nParam] = {0,10,2,80},Prop[nParam],CParam[nParam],stepSize[nParam] = {0.5,0.5,0.25,1};
+double RealVal[nParam] = {4,2,2,80},Prop[nParam],CParam[nParam],stepSize[nParam] = {0.5,0.5,0.25,1};
 double AncestorExpr = 250, AncestorVar = 10;
-double branchTimes[nNode] = {0,0.1,0.3,3,0.4,1};
+double branchTimes[nNode] = {0,0.5,1,0.5,2,1};
 double TrueTipExpr[nNode];
 double TrueTipVar[nNode];
 double EstimatedExpr[nNode], EstimatedVar[nNode],Cov[nTip][nTip];
@@ -159,8 +159,6 @@ void CalcPrior(){
 void CalcLikelihood(){
     CalcEstimatedVars();
     likelihood = -(nDataPoint/2)*log10(determinantOfMatrix(Cov,nTip)) -0.5*predDiff(); //predDiff calculates [x - E[x]]'Cov^-1[x - E[x]]
-    cout << "det" << log10(determinantOfMatrix(Cov,nTip)) << endl;
-    cout << "pred" << predDiff() << endl;
 }
 
 //predDiff calculates [x - E[x]]'Cov^-1[x - E[x]], where x is observed expression and E[x] is expected based on parameter values
@@ -190,7 +188,7 @@ void CalcEstimatedVars(){
     }
     for (int i = 0; i < nTip; i++){
         for (int j = 0; j < nTip; j++){
-            if ( i == j ) Cov[i][j] = EstimatedVar[i + nTip]; //Covariance with itself is variance; add individual variance here
+            if ( i == j ) Cov[i][j] = EstimatedVar[i + nTip] + Prop[0]; //Covariance with itself is variance; add individual variance here
             else if (i > j) Cov[i][j] = Cov[j][i]; //Already calculated it, so save a bit of time
             else Cov[i][j] = EstimatedVar[MutAncestor[i][j]]*exp(-Prop[2]*TipDist[i][j]);
         }
