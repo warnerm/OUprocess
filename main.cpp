@@ -17,7 +17,7 @@ double TestData[nDataPoint][nTip];
 //For the following, define individual variance, phenotypic drift, selection, and optimum expression
 double RealVal[nParam] = {0,20,3,80},Prop[nParam],CParam[nParam],stepSize[nParam] = {0.25,2,0.25,1};
 double AncestorExpr = 250, AncestorVar = 2;
-double branchTimes[nNode] = {0,1,2,4,2,1};
+double branchTimes[nNode] = {0,0.1,0.5,4,2,0.05};
 double TrueTipExpr[nNode];
 double TrueTipVar[nNode];
 double EstimatedExpr[nNode], EstimatedVar[nNode],Cov[nTip][nTip];
@@ -48,6 +48,12 @@ int main(int argc, const char * argv[]) {
     }
     for (int i=0; i < BurnIn; i++){
         runML();
+        cout << likelihood << endl;
+        cout << "pre" << predDiff() << endl;
+        for (int j = 0; j < nTip; j++){
+            cout << EstimatedVar[j] << endl;
+            cout << "expr" << EstimatedExpr[j] << endl;
+        }
     }
     Burn = false; //Begin keeping track of values
     for (int i = 0; i < boots; i++){
@@ -186,7 +192,7 @@ void CalcEstimatedVars(){
     }
     for (int i = 0; i < nTip; i++){
         for (int j = 0; j < nTip; j++){
-            if ( i == j ) Cov[i][j] = EstimatedVar[i + nNode]; //Covariance with itself is variance
+            if ( i == j ) Cov[i][j] = EstimatedVar[i + nTip]; //Covariance with itself is variance
             else if (i > j) Cov[i][j] = Cov[j][i]; //Already calculated it, so save a bit of time
             else Cov[i][j] = EstimatedVar[MutAncestor[i][j]]*exp(-Prop[2]*TipDist[i][j]);
         }
