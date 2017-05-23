@@ -17,7 +17,8 @@
 #include <string>
 using namespace std;
 
-const int nParam = 4,nDataPoint = 100,nTip=3;
+const int nOptimal = 2,nDataPoint = 100,nTip=5;
+const int nParam = nOptimal + 3;
 const double c1 = 0.282095; //sqrt(1/(2*pi))
 void InitializeParameters();
 void InitializeFile();

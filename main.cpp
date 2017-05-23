@@ -7,7 +7,7 @@
 //
 
 #include "MHfuns.hpp"
-int boots = 100000,BurnIn = 10000;
+int boots = 10000,BurnIn = 1000;
 const int nNode = nTip*2;
 int ancestor[nNode];
 bool Burn = true,accept;
@@ -15,9 +15,10 @@ ofstream out;
 double prob1, prob2,prior,likelihood;
 double TestData[nDataPoint][nTip];
 //For the following, define individual variance, phenotypic drift, selection, and optimum expression
-double RealVal[nParam] = {4,2,2,80},Prop[nParam],CParam[nParam],stepSize[nParam] = {0.5,0.5,0.25,1};
+double RealVal[nParam] = {3,5,2,100,70},Prop[nParam],CParam[nParam],stepSize[nParam] = {0.5,0.5,0.25,1,1};
 double AncestorExpr = 250, AncestorVar = 10;
-double branchTimes[nNode] = {0,0.5,1,0.5,2,1};
+int optimalIndex[nNode - 1] = {3,3,3,3,3,3,3,3,4}; //Define optimal expression levels for different branches
+double branchTimes[nNode] = {0,0.5,3,10,3,0.2,2.5,5,0.1,2};
 double TrueTipExpr[nNode];
 double TrueTipVar[nNode];
 double EstimatedExpr[nNode], EstimatedVar[nNode],Cov[nTip][nTip];
@@ -107,7 +108,7 @@ double CalcVariance(double var,double Par[nParam],int branch){
 
 //Calculate expected expression based on variance of immediately ancestral node
 double CalcExpr(double expr, double Par[nParam],int branch){
-    double Expression = expr*exp(-Par[2]*branchTimes[branch]) + Par[3]*(1 - exp(-Par[2]*branchTimes[branch]));
+    double Expression = expr*exp(-Par[2]*branchTimes[branch]) + Par[optimalIndex[branch]]*(1 - exp(-Par[2]*branchTimes[branch]));
     return(Expression);
 }
 
@@ -125,13 +126,17 @@ void GenerateData(){
 //Add header to output file
 void InitializeFile(){
     out.open("Results2.txt");
-    out << "tau\tdrift\tselection\toptimal\taccept" << endl;
+    out << "tau\tdrift\tselection\t";
+    for (int i = 0; i < nOptimal; i++){
+        out << "optimal" << i;
+    }
+    out << endl;
     out.close();
 }
 
 //Initialize parameters in middle of distribution
 void InitializeParameters(){
-    CParam[0] = 3;
+    CParam[0] = 20;
     CParam[1] = 3;
     CParam[2] = 0.1;
     CParam[3] = 120;
@@ -144,7 +149,7 @@ void InitializeParameters(){
 
 //Calculate prior probability. Must edit this for each MH algorithm
 void CalcPrior(){
-    double tau = dUnif(0,30,Prop[0]);
+    double tau = dUnif(0,1000,Prop[0]);
     double drift = dUnif(0,1000,Prop[1]);
     double selection = dUnif(0,30,Prop[2]);
     double optimal = dUnif(0,1000,Prop[3]);
