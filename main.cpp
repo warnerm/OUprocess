@@ -128,9 +128,9 @@ void InitializeFile(){
     out.open("Results2.txt");
     out << "tau\tdrift\tselection\t";
     for (int i = 0; i < nOptimal; i++){
-        out << "optimal" << i;
+        out << "optimal" << i << "\t";
     }
-    out << endl;
+    out << "accept" << endl;
     out.close();
 }
 
@@ -140,6 +140,7 @@ void InitializeParameters(){
     CParam[1] = 3;
     CParam[2] = 0.1;
     CParam[3] = 120;
+    CParam[4] = 120;
     std::copy(CParam,CParam+nParam,Prop); //Necessary to calculate Posterior,
     CalcPrior();
     CalcLikelihood();
