@@ -7,7 +7,7 @@
 //
 
 #include "MHfuns.hpp"
-int boots = 10000000,BurnIn = 1000000;
+int boots = 1000000,BurnIn = 10000,nRun,timeStep = 0.0001;
 const int nNode = nTip*2 - 1;
 int ancestor[nNode];
 bool Burn = true,accept;
@@ -15,24 +15,23 @@ ofstream out;
 double prob1, prob2,prior,likelihood;
 double TestData[nDataPoint][nTip];
 //For the following, define individual variance, phenotypic drift, selection, and optimum expression
-double RealVal[nParam] = {3,5,2,100,70},Prop[nParam],CParam[nParam],stepSize[nParam] = {0.1,0.1,0.1,0.5,0.5};
-int optimalIndex[nNode - 1] = {5,5,5,5,5,5,5,6}; //Define optimal expression levels for different branches
+double RealVal[nParam] = {3,5,2,100,70},Prop[nParam],CParam[nParam],stepSize[nParam] = {0.5,0.5,0.5,1,1};
+int optimalIndex[nNode - 1] = {3,3,3,3,3,3,3,4}; //Define optimal expression levels for different branches
 double branchTimes[nNode - 1] = {0.5,3,10,3,0.2,2.5,5,1};
-double TrueTipExpr[nNode];
-double TrueTipVar[nNode];
-double EstimatedExpr[nNode], EstimatedVar[nNode],Cov[nTip][nTip];
+double EstimatedExpr[nNode], EstimatedVar[nNode],Cov[nTip][nTip],SimExpr[nNode];
 double adj[nTip][nTip],inv[nTip][nTip];
 int MutAncestor[nTip][nTip];
 double TipDist[nTip][nTip];
+double TrueTipExpr[nNode],TrueTipVar[nNode];
 
 int main(int argc, const char * argv[]) {
     InitializeParameters();
     InitializeIndex();
     InitializeTipDist();
-    CalcTrueVals();
-    GenerateData(); //While testing utility of approach
     InitializeFile();
     SimulateData();
+//    CalcTrueVals();
+//    GenerateData();
     for (int i=0; i < BurnIn; i++){
         runML();
 //        cout << likelihood << endl;
@@ -43,7 +42,7 @@ int main(int argc, const char * argv[]) {
 //        }
     }
     Burn = false; //Begin keeping track of values
-    for (int i = 0; i < boots; i++){
+    for (nRun = 0; nRun < boots; nRun++){
         runML();
     }
     return 0;
@@ -51,7 +50,33 @@ int main(int argc, const char * argv[]) {
 
 //Simulate data under the O-U model with the given parameter states
 void SimulateData(){
-    
+    SimExpr[0] = RealVal[3];
+    for (int i = 1; i < nNode; i++){
+        double expr = SimExpr[ancestor[i]];
+        double time = 0;
+        //Stochastic differential equation governing OU process
+        while (time < branchTimes[i]){
+            expr = expr + RealVal[2]*(RealVal[optimalIndex[i]] - expr) + Drift(RealVal[1]);
+            time = time + timeStep;
+        }
+        SimExpr[i] = expr;
+    }
+    GenerateSimData();
+}
+
+//Takes Simulated mean expression values and draws random values based on individual variance
+void GenerateSimData(){
+    for (int i = 0; i < nTip; i++){
+        normal_distribution<double> dis(SimExpr[i+nTip - 1],RealVal[0]); //Initialize standard deviation
+        for (int j = 0; j < nDataPoint; j++){
+            TestData[j][i] = dis(rng);
+        }
+    }
+}
+//Calculates change per time-step due to drift
+double Drift(double sig2){
+    normal_distribution<double> dis(0,sig2*timeStep); //Initialize standard deviation
+    return(dis(rng));
 }
 
 //Initialize key for which nodes are ancestor, matrix of divergence times

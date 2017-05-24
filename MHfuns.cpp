@@ -7,7 +7,7 @@
 //
 
 #include "MHfuns.hpp"
-extern int boots;
+extern int boots,nRun;
 
 //Use Maximum Likelihood to update parameters
 void runML(){
@@ -17,7 +17,7 @@ void runML(){
         accept = false;
     } else {
         TestProposal();
-        if (!Burn) PrintToFile(); //Don't keep burn-in values
+        if (!Burn & (nRun % 5000 == 0)) PrintToFile(); //Don't keep burn-in values
     }
 }
 
