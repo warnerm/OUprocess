@@ -7,7 +7,7 @@
 //
 
 #include "MHfuns.hpp"
-int boots = 10000000,BurnIn = 1000000,nRun;
+int boots = 1000000,BurnIn = 100000,nRun,nAccept,nValley=100,meanBranchLength=2;
 double timeStep = 0.001;
 const int nNode = nTip*2 - 1;
 int ancestor[nNode];
@@ -16,9 +16,9 @@ ofstream out;
 double prob1, prob2,prior,likelihood;
 double TestData[nDataPoint][nTip];
 //For the following, define individual variance, phenotypic drift, selection, and optimum expression
-double RealVal[nParam] = {3,5,2,100,70},Prop[nParam],CParam[nParam],stepSize[nParam] = {0.5,0.5,0.5,1,1};
-int optimalIndex[nNode - 1] = {3,3,3,3,3,3,3,4}; //Define optimal expression levels for different branches
-double branchTimes[nNode - 1] = {0.5,3,10,3,0.2,2.5,5,1};
+double RealVal[nParam],Prop[nParam],CParam[nParam],stepSize[nParam];
+int optimalIndex[nNode - 1]; //Define optimal expression levels for different branches
+double branchTimes[nNode - 1];
 double EstimatedExpr[nNode], EstimatedVar[nNode],Cov[nTip][nTip],SimExpr[nNode];
 double adj[nTip][nTip],inv[nTip][nTip];
 int MutAncestor[nTip][nTip];
@@ -26,27 +26,61 @@ double TipDist[nTip][nTip];
 double TrueTipExpr[nNode],TrueTipVar[nNode];
 
 int main(int argc, const char * argv[]) {
-    InitializeParameters();
+    ConstructBranches();
+    InitializeOptimal();
     InitializeIndex();
     InitializeTipDist();
+    GenerateTrueVals();
     InitializeFile();
     SimulateData();
-//    CalcTrueVals();
-//    GenerateData();
-    for (int i=0; i < BurnIn; i++){
-        runML();
-//        cout << likelihood << endl;
-//        cout << "pre" << predDiff() << endl;
-//        for (int j = 0; j < nTip; j++){
-//            cout << EstimatedVar[j] << endl;
-//            cout << "expr" << EstimatedExpr[j] << endl;
-//        }
-    }
-    Burn = false; //Begin keeping track of values
+    BurnInML();
     for (nRun = 0; nRun < boots; nRun++){
         runML();
     }
     return 0;
+}
+
+//Construct phylogeny randomly, drawing branch times from a uniform distribution, mean = meanBranchLength
+void ConstructBranches(){
+    uniform_real_distribution<double> dis(0,2*meanBranchLength); //Initialize standard deviation
+    for (int i = 0; i < (nNode - 1); i++){
+        branchTimes[i] = dis(rng); //For now, make everything with the same optimal
+    }
+}
+
+//Construct array of optimal expression
+void InitializeOptimal(){
+    for (int i = 0; i < (nNode - 1); i++){
+        optimalIndex[i] = 3; //For now, make everything with the same optimal
+    }
+}
+
+//Burn-in period
+void BurnInML(){
+    //Want to do burn in and make sure that we've left "valleys" of vanishingly low likelihood
+    while (true){
+        nAccept = 0;
+        InitializeParameters();
+        for (int i=0; i < BurnIn; i++){
+            runML();
+        }
+        if (nAccept > nValley){
+            break;
+        }
+    }
+    Burn = false; //Begin keeping track of values
+    for (int i = 0; i < nParam; i++){
+        stepSize[i] = 0.25; //Decrease step size for ML estimation
+    }
+}
+
+//Generate true values based on command line input, drawing parameters from distributions
+void GenerateTrueVals(){
+    uniform_real_distribution<double> dis(0,1000);
+    for (int i = 0; i < nParam; i++){
+        RealVal[i] = dis(rng);
+        stepSize[i] = 2; //Start with big step sizes for the burn-in period
+    }
 }
 
 //Simulate data under the O-U model with the given parameter states
@@ -114,17 +148,6 @@ void InitializeTipDist(){
     }
 }
 
-//Calculate true expected values based on parameter values
-void CalcTrueVals(){
-    TrueTipExpr[0] = CParam[3]; //Set as optimum of 1st branch
-    TrueTipVar[0] = 0;
-    //After entering the ancestral variance, each successive node based on ancestor
-    for (int i = 1; i < nNode; i++){
-        TrueTipExpr[i] = CalcExpr(TrueTipExpr[ancestor[i]],RealVal,i);
-        TrueTipVar[i] = CalcVariance(TrueTipVar[ancestor[i]],RealVal,i);
-    }
-}
-
 //Calculate expected variance based on variance of immediately ancestral node
 double CalcVariance(double var,double Par[nParam],int branch){
     double Variance = (Par[1]/(2*Par[2]))*(1 - exp(-2*Par[2]*branchTimes[branch])) + var*exp(-2*Par[2]*branchTimes[branch]);
@@ -133,19 +156,8 @@ double CalcVariance(double var,double Par[nParam],int branch){
 
 //Calculate expected expression based on variance of immediately ancestral node
 double CalcExpr(double expr, double Par[nParam],int branch){
-    double Expression = expr*exp(-Par[2]*branchTimes[branch]) + Par[optimalIndex[branch]]*(1 - exp(-Par[2]*branchTimes[branch]));
+    double Expression = expr*exp(-Par[2]*branchTimes[branch - 1]) + Par[optimalIndex[branch - 1]]*(1 - exp(-Par[2]*branchTimes[branch - 1]));
     return(Expression);
-}
-
-//Generate dummy data from random values centered around true values
-void GenerateData(){
-    for (int i=0 ; i<nTip; i++){ //Don't generate values for interior nodes
-        double var = TrueTipVar[i + nTip - 1] + RealVal[0]; //Includes individual variation
-        normal_distribution<double> dis(TrueTipExpr[i + nTip - 1],var); //Initialize standard deviation
-        for (int j = 0; j < nDataPoint; j++){
-            TestData[j][i] = dis(rng);
-        }
-    }
 }
 
 //Add header to output file
@@ -161,10 +173,10 @@ void InitializeFile(){
 
 //Initialize parameters in middle of distribution
 void InitializeParameters(){
-    for (int i = 0; i < 3; i++){
-        CParam[i] = 5;
+    uniform_real_distribution<double> dis(0,1000);
+    for (int i = 0; i < nParam; i++){
+        CParam[i] = dis(rng);
     }
-    CParam[3] = CParam[4] = 100;
     std::copy(CParam,CParam+nParam,Prop); //Necessary to calculate Posterior,
     CalcPrior();
     CalcLikelihood();

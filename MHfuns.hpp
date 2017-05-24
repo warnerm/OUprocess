@@ -17,7 +17,7 @@
 #include <string>
 using namespace std;
 
-const int nOptimal = 2,nDataPoint = 3,nTip=5;
+const int nOptimal = 1,nDataPoint = 3,nTip=15;
 const int nParam = nOptimal + 3;
 const double c1 = 0.282095; //sqrt(1/(2*pi))
 void InitializeParameters();
@@ -25,8 +25,10 @@ void InitializeFile();
 void runML();
 void Randomize();
 void GenerateData();
+void ConstructBranches();
 void GenProposal();
 void TestProposal();
+void GenerateTrueVals();
 void PrintToFile();
 void CalcPosterior();
 void CalcPrior();
@@ -35,6 +37,8 @@ void CalcLikelihood();
 void InitializeIndex();
 void SimulateData();
 void GenerateSimData();
+void BurnInML();
+void InitializeOptimal();
 double Drift(double sig2);
 double CalcVariance(double var,double Par[nParam],int branch);
 double CalcExpr(double expr, double Par[nParam],int branch);
@@ -50,7 +54,7 @@ void CalcEstimatedVars();
 extern double prob1, prob2, prior, likelihood;
 extern double TestData[nDataPoint][nTip];
 extern double RealVal[nParam],Prop[nParam],CParam[nParam],stepSize[nParam];
-extern int boots,BurnIn,nRun;
+extern int boots,BurnIn,nRun,nAccept;
 extern bool Burn,accept;
 extern ifstream in;
 extern ofstream out;

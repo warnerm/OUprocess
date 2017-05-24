@@ -17,7 +17,7 @@ void runML(){
         accept = false;
     } else {
         TestProposal();
-        if (!Burn & (nRun % 5000 == 0)) PrintToFile(); //Don't keep burn-in values
+        if (!Burn & (nRun % 10000 == 0)) PrintToFile(); //Don't keep burn-in values
     }
 }
 
@@ -47,6 +47,7 @@ void TestProposal(){
     if (rNum < prob){
         std::copy(Prop,Prop+nParam,CParam);
         accept = true;
+        nAccept++;
         prob2 = prob1; //Next round, the posterior for the current parameters is equal to the current proposal
     } else {
         accept = false;
