@@ -7,7 +7,8 @@
 //
 
 #include "MHfuns.hpp"
-int boots = 1000000,BurnIn = 10000,nRun,timeStep = 0.0001;
+int boots = 10000000,BurnIn = 1000000,nRun;
+double timeStep = 0.001;
 const int nNode = nTip*2 - 1;
 int ancestor[nNode];
 bool Burn = true,accept;
@@ -55,8 +56,8 @@ void SimulateData(){
         double expr = SimExpr[ancestor[i]];
         double time = 0;
         //Stochastic differential equation governing OU process
-        while (time < branchTimes[i]){
-            expr = expr + RealVal[2]*(RealVal[optimalIndex[i]] - expr) + Drift(RealVal[1]);
+        while (time < branchTimes[i - 1]){
+            expr = expr + RealVal[2]*(RealVal[optimalIndex[i - 1]] - expr)*timeStep + Drift(RealVal[1]);
             time = time + timeStep;
         }
         SimExpr[i] = expr;
@@ -70,6 +71,7 @@ void GenerateSimData(){
         normal_distribution<double> dis(SimExpr[i+nTip - 1],RealVal[0]); //Initialize standard deviation
         for (int j = 0; j < nDataPoint; j++){
             TestData[j][i] = dis(rng);
+            //cout << i << j << TestData[j][i] << endl;
         }
     }
 }
