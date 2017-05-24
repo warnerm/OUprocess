@@ -7,7 +7,7 @@
 //
 
 #include "MHfuns.hpp"
-int boots = 1000000,BurnIn = 100000,nRun,nAccept,nValley=100,meanBranchLength=2;
+int boots = 100000,BurnIn = 10000,nRun,nAccept,nValley=100,meanBranchLength=1;
 double timeStep = 0.001;
 const int nNode = nTip*2 - 1;
 int ancestor[nNode];
@@ -32,6 +32,7 @@ int main(int argc, const char * argv[]) {
     InitializeTipDist();
     GenerateTrueVals();
     InitializeFile();
+    InitializeParameters();
     SimulateData();
     BurnInML();
     for (nRun = 0; nRun < boots; nRun++){
@@ -44,7 +45,7 @@ int main(int argc, const char * argv[]) {
 void ConstructBranches(){
     uniform_real_distribution<double> dis(0,2*meanBranchLength); //Initialize standard deviation
     for (int i = 0; i < (nNode - 1); i++){
-        branchTimes[i] = dis(rng); //For now, make everything with the same optimal
+        branchTimes[i] = dis(rng)*0.01; //For now, make everything with the same optimal
     }
 }
 
@@ -60,23 +61,26 @@ void BurnInML(){
     //Want to do burn in and make sure that we've left "valleys" of vanishingly low likelihood
     while (true){
         nAccept = 0;
-        InitializeParameters();
+        cout << "here" << endl;
         for (int i=0; i < BurnIn; i++){
             runML();
+            cout << i << endl;
         }
+        cout << nAccept << endl;
         if (nAccept > nValley){
             break;
         }
+        InitializeParameters();
     }
     Burn = false; //Begin keeping track of values
     for (int i = 0; i < nParam; i++){
-        stepSize[i] = 0.25; //Decrease step size for ML estimation
+        stepSize[i] = 0.5; //Decrease step size for ML estimation
     }
 }
 
 //Generate true values based on command line input, drawing parameters from distributions
 void GenerateTrueVals(){
-    uniform_real_distribution<double> dis(0,1000);
+    uniform_real_distribution<double> dis(0,25);
     for (int i = 0; i < nParam; i++){
         RealVal[i] = dis(rng);
         stepSize[i] = 2; //Start with big step sizes for the burn-in period
@@ -156,7 +160,7 @@ double CalcVariance(double var,double Par[nParam],int branch){
 
 //Calculate expected expression based on variance of immediately ancestral node
 double CalcExpr(double expr, double Par[nParam],int branch){
-    double Expression = expr*exp(-Par[2]*branchTimes[branch - 1]) + Par[optimalIndex[branch - 1]]*(1 - exp(-Par[2]*branchTimes[branch - 1]));
+    double Expression = expr*exp(-Par[2]*branchTimes[branch]) + Par[optimalIndex[branch]]*(1 - exp(-Par[2]*branchTimes[branch]));
     return(Expression);
 }
 
@@ -168,6 +172,11 @@ void InitializeFile(){
         out << "optimal" << i << "\t";
     }
     out << "accept" << endl;
+    //On the first line, add the true values
+    for (int i = 0; i < nParam; i++){
+        out << RealVal[i] << "\t";
+    }
+    out << 0 << endl;
     out.close();
 }
 
@@ -226,17 +235,19 @@ double predDiff(){
 
 //Calculate the estimated mean expression and variance in expression from parameter values
 void CalcEstimatedVars(){
-    EstimatedExpr[0] = Prop[3];
-    EstimatedVar[0] = 0;
+    EstimatedExpr[0] = 200;
+    cout << EstimatedExpr[0] << "first" << endl;
+    EstimatedVar[0] = 1;
     for (int i = 1; i < nNode; i++){ //skip root of tree
-        EstimatedExpr[i] = CalcExpr(EstimatedExpr[ancestor[i]], Prop, i);
-        EstimatedVar[i] = CalcVariance(EstimatedVar[ancestor[i]], Prop, i);
+        EstimatedExpr[i] = CalcExpr(EstimatedExpr[ancestor[i]], Prop, i - 1);
+        EstimatedVar[i] = CalcVariance(EstimatedVar[ancestor[i]], Prop, i - 1);
     }
     for (int i = 0; i < nTip; i++){
         for (int j = 0; j < nTip; j++){
             if ( i == j ) Cov[i][j] = EstimatedVar[i + nTip - 1] + Prop[0]; //Covariance with itself is variance; add individual variance here
             else if (i > j) Cov[i][j] = Cov[j][i]; //Already calculated it, so save a bit of time
             else Cov[i][j] = EstimatedVar[MutAncestor[i][j]]*exp(-Prop[2]*TipDist[i][j]);
+            cout << Cov[i][j] << endl;
         }
     }
     

@@ -17,7 +17,7 @@
 #include <string>
 using namespace std;
 
-const int nOptimal = 1,nDataPoint = 3,nTip=15;
+const int nOptimal = 1,nDataPoint = 3,nTip=3;
 const int nParam = nOptimal + 3;
 const double c1 = 0.282095; //sqrt(1/(2*pi))
 void InitializeParameters();
