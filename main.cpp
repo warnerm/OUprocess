@@ -7,7 +7,7 @@
 //
 
 #include "MHfuns.hpp"
-int boots = 50000000,BurnIn = 10000000;
+int boots = 100000,BurnIn = 10000;
 const int nNode = nTip*2 - 1;
 int ancestor[nNode];
 bool Burn = true,accept;
@@ -15,9 +15,9 @@ ofstream out;
 double prob1, prob2,prior,likelihood;
 double TestData[nDataPoint][nTip];
 //For the following, define individual variance, phenotypic drift, selection, and optimum expression
-double RealVal[nParam] = {3,5,2,100,70},Prop[nParam],CParam[nParam],stepSize[nParam] = {0.1,0.1,0.1,0.5,0.5};
-int optimalIndex[nNode - 1] = {3,3,3,3,3,3,3,4}; //Define optimal expression levels for different branches
-double branchTimes[nNode - 1] = {0.5,0.4,2.9,3,0.2,0.2,0.5,2};
+double RealVal[nParam] = {3,5,2,100,70},Prop[nParam],CParam[nParam],stepSize[nParam] = {0.5,0.5,0.5,0.5,0.5};
+int optimalIndex[nNode - 1] = {5,5,5,5,5,5,5,6}; //Define optimal expression levels for different branches
+double branchTimes[nNode - 1] = {0.5,3,10,3,0.2,2.5,5,0.1};
 double TrueTipExpr[nNode];
 double TrueTipVar[nNode];
 double EstimatedExpr[nNode], EstimatedVar[nNode],Cov[nTip][nTip];
@@ -124,7 +124,7 @@ void GenerateData(){
 //Add header to output file
 void InitializeFile(){
     out.open("Results2.txt");
-    out << "tau\tdrift\tselection\t";
+    out << "tau\tdrift\tselection\tAncestorExpr\tAncestorVar\t";
     for (int i = 0; i < nOptimal; i++){
         out << "optimal" << i << "\t";
     }
@@ -135,10 +135,8 @@ void InitializeFile(){
 //Initialize parameters in middle of distribution
 void InitializeParameters(){
     for (int i = 0; i < nParam; i++){
-        CParam[i] = 5;
+        CParam[i] = 50;
     }
-    CParam[3] = 50;
-    CParam[4] = 100;
     std::copy(CParam,CParam+nParam,Prop); //Necessary to calculate Posterior,
     CalcPrior();
     CalcLikelihood();
