@@ -7,7 +7,6 @@
 //
 
 #include "MHfuns.hpp"
-extern int boots,nRun;
 
 //Use Maximum Likelihood to update parameters
 void runML(){
@@ -57,7 +56,7 @@ void TestProposal(){
 //Print current parameter states, whether proposal was accepted
 void PrintToFile(){
     ofstream out;
-    out.open("Results2.txt",ios::app);
+    out.open(file.c_str(),ios::app);
     for (int i = 0; i < nParam; i++){
         out << CParam[i] << '\t';
     }

@@ -13,6 +13,7 @@ const int nNode = nTip*2 - 1;
 int ancestor[nNode];
 bool Burn = true,accept;
 ofstream out;
+string file;
 double prob1, prob2,prior,likelihood;
 double TestData[nDataPoint][nTip];
 //For the following, define individual variance, phenotypic drift, selection, and optimum expression
@@ -23,7 +24,8 @@ double EstimatedExpr[nNode], EstimatedVar[nNode],Cov[nTip][nTip],SimExpr[nNode];
 double adj[nTip][nTip],inv[nTip][nTip];
 int MutAncestor[nTip][nTip];
 double TipDist[nTip][nTip];
-double TrueTipExpr[nNode],TrueTipVar[nNode];
+double Params_Selection[nParam],Params_Drift[nParam];
+bool Selection_Model;
 
 int main(int argc, const char * argv[]) {
     ConstructBranches();
@@ -31,14 +33,77 @@ int main(int argc, const char * argv[]) {
     InitializeIndex();
     InitializeTipDist();
     GenerateTrueVals();
-    InitializeFile();
     InitializeParameters();
     SimulateData();
+    Selection_Model = true; //First, fit parameters using a model with selection
+    InitializeFile();
     BurnInML();
     for (nRun = 0; nRun < boots; nRun++){
         runML();
     }
+    Selection_Model = false;
+    InitializeFile();
+    BurnInML();
+    for (nRun = 0; nRun < boots; nRun++){
+        runML();
+    }
+    CompareModels();
     return 0;
+}
+
+//Compares selection and drift models using likelihood ratio test. Writes likelihood ratio to file
+void CompareModels(){
+    Selection_Model = true; //First, fit parameters using a model with selection
+    getMeanParam();
+    Selection_Model = false; //First, fit parameters using a model with selection
+    getMeanParam();
+    LikelihoodRatioTest();
+}
+
+//Read results files, calculate parameter estimates.
+void getMeanParam(){
+    if (Selection_Model) file = "SelectionResults.txt";
+    else file = "DriftResults.txt";
+    ifstream in(file.c_str());
+    double *result[nParam];
+    double sum[nParam];
+    int nLine = 0;
+    for (int i = 0; i < nParam; i++){
+        sum[i] = 0;
+    }
+    while (in >> *result[nParam + 1]){
+        for (int i = 0; i <nParam; i++){
+            sum[i] = sum[i] + *result[i];
+        }
+        nLine++;
+    }
+    if (Selection_Model){
+        for (int i = 0; i < nParam; i++){
+            Params_Selection[i] = sum[i]/nLine;
+        }
+    }
+    else {
+        for (int i = 0; i < nParam; i++){
+            Params_Drift[i] = sum[i]/nLine;
+        }
+    }
+}
+
+//Returns likelihood ratio of data; writes likelihood ratio to file
+void LikelihoodRatioTest(){
+    std::copy(Params_Selection,Params_Selection+nParam,Prop); //Necessary to calculate Posterior,
+    CalcLikelihood();
+    double sel = likelihood;
+    std::copy(Params_Drift,Params_Drift+nParam,Prop); //Necessary to calculate Posterior,
+    CalcLikelihood();
+    double drift = likelihood;
+    out.open("finalFile.txt");
+    out << "tau\tdrift\tselection\topt\tlogLike" << endl;
+    for (int i = 0; i < nParam; i ++) out << Params_Selection[i] << "\t";
+    out << sel << endl;
+    for (int i = 0; i < nParam; i ++) out << Params_Drift[i] << "\t";
+    out << drift << endl;
+    out.close();
 }
 
 //Construct phylogeny randomly, drawing branch times from a uniform distribution, mean = meanBranchLength
@@ -58,15 +123,13 @@ void InitializeOptimal(){
 
 //Burn-in period
 void BurnInML(){
+    Burn = true;
     //Want to do burn in and make sure that we've left "valleys" of vanishingly low likelihood
     while (true){
         nAccept = 0;
-        cout << "here" << endl;
         for (int i=0; i < BurnIn; i++){
             runML();
-            cout << i << endl;
         }
-        cout << nAccept << endl;
         if (nAccept > nValley){
             break;
         }
@@ -74,7 +137,7 @@ void BurnInML(){
     }
     Burn = false; //Begin keeping track of values
     for (int i = 0; i < nParam; i++){
-        stepSize[i] = 0.5; //Decrease step size for ML estimation
+        stepSize[i] = 4; //Decrease step size for ML estimation
     }
 }
 
@@ -109,7 +172,6 @@ void GenerateSimData(){
         normal_distribution<double> dis(SimExpr[i+nTip - 1],RealVal[0]); //Initialize standard deviation
         for (int j = 0; j < nDataPoint; j++){
             TestData[j][i] = dis(rng);
-            //cout << i << j << TestData[j][i] << endl;
         }
     }
 }
@@ -155,18 +217,22 @@ void InitializeTipDist(){
 //Calculate expected variance based on variance of immediately ancestral node
 double CalcVariance(double var,double Par[nParam],int branch){
     double Variance = (Par[1]/(2*Par[2]))*(1 - exp(-2*Par[2]*branchTimes[branch])) + var*exp(-2*Par[2]*branchTimes[branch]);
+    if (!Selection_Model) Variance = var + Par[1]*branchTimes[branch];
     return(Variance);
 }
 
 //Calculate expected expression based on variance of immediately ancestral node
 double CalcExpr(double expr, double Par[nParam],int branch){
     double Expression = expr*exp(-Par[2]*branchTimes[branch]) + Par[optimalIndex[branch]]*(1 - exp(-Par[2]*branchTimes[branch]));
+    if (!Selection_Model) Expression = expr;
     return(Expression);
 }
 
 //Add header to output file
 void InitializeFile(){
-    out.open("Results2.txt");
+    if (Selection_Model) file = "SelectionResults.txt";
+    else file = "DriftResults.txt";
+    out.open(file.c_str());
     out << "tau\tdrift\tselection\t";
     for (int i = 0; i < nOptimal; i++){
         out << "optimal" << i << "\t";
@@ -235,9 +301,8 @@ double predDiff(){
 
 //Calculate the estimated mean expression and variance in expression from parameter values
 void CalcEstimatedVars(){
-    EstimatedExpr[0] = 200;
-    cout << EstimatedExpr[0] << "first" << endl;
-    EstimatedVar[0] = 1;
+    EstimatedExpr[0] = Prop[3];
+    EstimatedVar[0] = 0;
     for (int i = 1; i < nNode; i++){ //skip root of tree
         EstimatedExpr[i] = CalcExpr(EstimatedExpr[ancestor[i]], Prop, i - 1);
         EstimatedVar[i] = CalcVariance(EstimatedVar[ancestor[i]], Prop, i - 1);
@@ -247,7 +312,6 @@ void CalcEstimatedVars(){
             if ( i == j ) Cov[i][j] = EstimatedVar[i + nTip - 1] + Prop[0]; //Covariance with itself is variance; add individual variance here
             else if (i > j) Cov[i][j] = Cov[j][i]; //Already calculated it, so save a bit of time
             else Cov[i][j] = EstimatedVar[MutAncestor[i][j]]*exp(-Prop[2]*TipDist[i][j]);
-            cout << Cov[i][j] << endl;
         }
     }
     

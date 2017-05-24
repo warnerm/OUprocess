@@ -39,6 +39,9 @@ void SimulateData();
 void GenerateSimData();
 void BurnInML();
 void InitializeOptimal();
+void CompareModels();
+void getMeanParam();
+void LikelihoodRatioTest();
 double Drift(double sig2);
 double CalcVariance(double var,double Par[nParam],int branch);
 double CalcExpr(double expr, double Par[nParam],int branch);
@@ -62,6 +65,7 @@ extern double adj[nTip][nTip],inv[nTip][nTip];
 static std::random_device rd; // random device engine, usually based on /dev/random on UNIX-like systems
 // initialize Mersennes' twister using rd to generate the seed
 static std::mt19937 rng(rd());
+extern string file;
 
 
 
