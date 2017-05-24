@@ -7,7 +7,7 @@
 //
 
 #include "MHfuns.hpp"
-int boots = 100000,BurnIn = 10000;
+int boots = 10000000,BurnIn = 1000000;
 const int nNode = nTip*2 - 1;
 int ancestor[nNode];
 bool Burn = true,accept;
@@ -15,9 +15,9 @@ ofstream out;
 double prob1, prob2,prior,likelihood;
 double TestData[nDataPoint][nTip];
 //For the following, define individual variance, phenotypic drift, selection, and optimum expression
-double RealVal[nParam] = {3,5,2,100,70},Prop[nParam],CParam[nParam],stepSize[nParam] = {0.5,0.5,0.5,0.5,0.5};
+double RealVal[nParam] = {3,5,2,100,70},Prop[nParam],CParam[nParam],stepSize[nParam] = {0.1,0.1,0.1,0.5,0.5};
 int optimalIndex[nNode - 1] = {5,5,5,5,5,5,5,6}; //Define optimal expression levels for different branches
-double branchTimes[nNode - 1] = {0.5,3,10,3,0.2,2.5,5,0.1};
+double branchTimes[nNode - 1] = {0.5,3,10,3,0.2,2.5,5,1};
 double TrueTipExpr[nNode];
 double TrueTipVar[nNode];
 double EstimatedExpr[nNode], EstimatedVar[nNode],Cov[nTip][nTip];
@@ -32,12 +32,7 @@ int main(int argc, const char * argv[]) {
     CalcTrueVals();
     GenerateData(); //While testing utility of approach
     InitializeFile();
-    for (int i = 0; i < nTip; i++){
-        for (int j = 0; j < nTip; j++){
-           
-        }
-
-    }
+    SimulateData();
     for (int i=0; i < BurnIn; i++){
         runML();
 //        cout << likelihood << endl;
@@ -52,6 +47,11 @@ int main(int argc, const char * argv[]) {
         runML();
     }
     return 0;
+}
+
+//Simulate data under the O-U model with the given parameter states
+void SimulateData(){
+    
 }
 
 //Initialize key for which nodes are ancestor, matrix of divergence times
@@ -124,7 +124,7 @@ void GenerateData(){
 //Add header to output file
 void InitializeFile(){
     out.open("Results2.txt");
-    out << "tau\tdrift\tselection\tAncestorExpr\tAncestorVar\t";
+    out << "tau\tdrift\tselection\t";
     for (int i = 0; i < nOptimal; i++){
         out << "optimal" << i << "\t";
     }
@@ -134,9 +134,10 @@ void InitializeFile(){
 
 //Initialize parameters in middle of distribution
 void InitializeParameters(){
-    for (int i = 0; i < nParam; i++){
-        CParam[i] = 50;
+    for (int i = 0; i < 3; i++){
+        CParam[i] = 5;
     }
+    CParam[3] = CParam[4] = 100;
     std::copy(CParam,CParam+nParam,Prop); //Necessary to calculate Posterior,
     CalcPrior();
     CalcLikelihood();

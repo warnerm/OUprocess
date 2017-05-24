@@ -33,6 +33,7 @@ void CalcPrior();
 void InitializeTipDist();
 void CalcLikelihood();
 void InitializeIndex();
+void SimulateData();
 double CalcVariance(double var,double Par[nParam],int branch);
 double CalcExpr(double expr, double Par[nParam],int branch);
 double predDiff();
