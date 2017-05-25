@@ -15,6 +15,11 @@
 #include <random>
 #include <fstream>
 #include <string>
+#include <sstream>
+#include <algorithm>
+#include <iterator>
+#include <vector>
+#include <cstdlib>
 using namespace std;
 
 const int nOptimal = 1,nDataPoint = 3,nTip=3;
@@ -24,6 +29,7 @@ void InitializeParameters();
 void InitializeFile();
 void runML();
 void Randomize();
+void OpenFile();
 void GenerateData();
 void ConstructBranches();
 void GenProposal();

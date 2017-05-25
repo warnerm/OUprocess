@@ -7,6 +7,7 @@
 //
 
 #include "MHfuns.hpp"
+
 int boots = 100000,BurnIn = 10000,nRun,nAccept,nValley=100,meanBranchLength=1;
 double timeStep = 0.001;
 const int nNode = nTip*2 - 1;
@@ -57,24 +58,37 @@ void CompareModels(){
     getMeanParam();
     Selection_Model = false; //First, fit parameters using a model with selection
     getMeanParam();
+    for (int i = 0; i < nParam; i++){
+        cout << Params_Selection[i] << endl;
+        cout << Params_Drift[i] << endl;
+    }
     LikelihoodRatioTest();
 }
 
 //Read results files, calculate parameter estimates.
 void getMeanParam(){
+    double sum[nParam + 1];
+    int nLine = 0;
+    for (int i = 0; i < nParam + 1; i++){
+        sum[i] = 0;
+    }
     if (Selection_Model) file = "SelectionResults.txt";
     else file = "DriftResults.txt";
     ifstream in(file.c_str());
-    double *result[nParam];
-    double sum[nParam];
-    int nLine = 0;
-    for (int i = 0; i < nParam; i++){
-        sum[i] = 0;
+    if(!in) //Always test the file open.
+    {
+        std::cout<<"Error opening output file"<< std::endl;
+        system("pause");
     }
-    while (in >> *result[nParam + 1]){
-        for (int i = 0; i <nParam; i++){
-            sum[i] = sum[i] + *result[i];
-        }
+    int i = 0;
+    double j = 0.0;
+    std::vector<string> est;
+    string line;
+    getline(in,line);
+    while (in >> j){
+        sum[i] = sum[i] + j;
+        i++;
+        if (i == nParam) i = 0;
         nLine++;
     }
     if (Selection_Model){
@@ -87,6 +101,12 @@ void getMeanParam(){
             Params_Drift[i] = sum[i]/nLine;
         }
     }
+    in.close();
+}
+
+//Open files with output data from ML
+void OpenFile(){
+    
 }
 
 //Returns likelihood ratio of data; writes likelihood ratio to file
