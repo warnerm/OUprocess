@@ -38,6 +38,11 @@ int main(int argc, const char * argv[]) {
     SimulateData();
     Selection_Model = true; //First, fit parameters using a model with selection
     InitializeFile();
+    for (int i = 0; i < nTip; i++){
+        for (int j = 0; j < nDataPoint; j++){
+            cout << TestData[j][i] << endl;
+        }
+    }
     BurnInML();
     for (nRun = 0; nRun < boots; nRun++){
         runML();
@@ -58,10 +63,6 @@ void CompareModels(){
     getMeanParam();
     Selection_Model = false; //First, fit parameters using a model with selection
     getMeanParam();
-    for (int i = 0; i < nParam; i++){
-        cout << Params_Selection[i] << endl;
-        cout << Params_Drift[i] << endl;
-    }
     LikelihoodRatioTest();
 }
 
@@ -119,6 +120,8 @@ void LikelihoodRatioTest(){
     double drift = likelihood;
     out.open("finalFile.txt");
     out << "tau\tdrift\tselection\topt\tlogLike" << endl;
+    for (int i = 0; i < nParam; i ++) out <<RealVal[i] << "\t";
+    out << "na" << endl;
     for (int i = 0; i < nParam; i ++) out << Params_Selection[i] << "\t";
     out << sel << endl;
     for (int i = 0; i < nParam; i ++) out << Params_Drift[i] << "\t";
