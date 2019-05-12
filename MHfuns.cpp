@@ -34,6 +34,8 @@ void CalcPosterior(){
     if (prior == -1) prob1 = -1;
     else {
         CalcLikelihood();
+
+        //iterate likelihood
         prob1 = prior + likelihood;
     }
 }

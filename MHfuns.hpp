@@ -60,6 +60,8 @@ double dUnif(double start, double end, double value);
 double dNorm(double mean, double sd, double value);
 void CalcTrueVals();
 void CalcEstimatedVars();
+
+//Variables
 extern double prob1, prob2, prior, likelihood;
 extern double TestData[nDataPoint][nTip];
 extern double RealVal[nParam],Prop[nParam],CParam[nParam],stepSize[nParam];

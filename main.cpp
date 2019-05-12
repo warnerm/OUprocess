@@ -25,6 +25,8 @@ double EstimatedExpr[nNode], EstimatedVar[nNode],Cov[nTip][nTip],SimExpr[nNode];
 double adj[nTip][nTip],inv[nTip][nTip];
 int MutAncestor[nTip][nTip];
 double TipDist[nTip][nTip];
+
+//Establish parameters to estimate
 double Params_Selection[nParam],Params_Drift[nParam];
 bool Selection_Model;
 
